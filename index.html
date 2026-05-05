@@ -1,0 +1,3082 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Howl Player</title>
+    <style>
+      /* ===== CSS VARIABLES ===== */
+      :root {
+        /* Colors */
+        --bg-dark: #0d0d0d;
+        --bg-panel: #161616;
+        --bg-bar: #1a1a1a;
+        --bg-input: #252525;
+
+        --text-main: #e0e0e0;
+        --text-dim: #888;
+
+        --accent: #0078d4;
+        --accent-hover: #005a9e;
+        --border: #333;
+        --success: #28a745;
+        --danger: #d9534f;
+
+        /* Spacing */
+        --spacing-xs: 4px;
+        --spacing-sm: 6px;
+        --spacing-md: 8px;
+        --spacing-lg: 10px;
+        --spacing-xl: 12px;
+        --spacing-xxl: 15px;
+        --spacing-xxxl: 20px;
+
+        /* Sizes */
+        --bar-height: 30px;
+        --tabs-height: 150px;
+        --hover-zone-height: 18px;
+        --button-height-sm: 24px;
+        --button-height-md: 26px;
+        --button-height-lg: 30px;
+
+        /* Transitions */
+        --transition-fast: 0.2s ease;
+        --transition-normal: 0.3s ease;
+
+        /* Shadows */
+        --shadow-video: 0 4px 20px rgba(0, 0, 0, 0.6);
+        --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      /* ===== RESET & BASE ===== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg-panel);
+        color: var(--text-main);
+        height: 100vh;
+        overflow: hidden;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      /* ===== LAYOUT CONTAINERS ===== */
+      .app-container {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-panel);
+        transition: padding-bottom var(--transition-normal);
+        z-index: 1;
+      }
+
+      .app-container.tabs-closed {
+        padding-bottom: var(--bar-height);
+      }
+
+      .app-container.tabs-closed.bar-hidden {
+        padding-bottom: 0;
+      }
+
+      .video-area {
+        flex: 1;
+        overflow: auto;
+        background: #000;
+      }
+
+      .video-inner {
+        min-width: 100%;
+        min-height: 100%;
+        display: flex;
+        align-items: safe center;
+        justify-content: safe center;
+      }
+
+      #mainVideo {
+        flex-shrink: 0;
+        box-shadow: var(--shadow-video);
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      /* ===== TABS PANELS ===== */
+      .tabs-area {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-panel);
+        border-top: 1px solid var(--border);
+        z-index: 10;
+        height: 0;
+        overflow: hidden;
+        transition: height var(--transition-normal);
+      }
+
+      .tabs-area.open {
+        height: var(--tabs-height);
+      }
+
+      .tab-panel {
+        display: none;
+        padding: var(--spacing-md) var(--spacing-xxl)
+          calc(var(--spacing-xxl) + var(--bar-height)) var(--spacing-xxl);
+        height: 100%;
+        overflow-y: visible;
+        gap: var(--spacing-sm);
+        flex-direction: column;
+      }
+
+      .tab-panel.active {
+        display: flex;
+      }
+
+      /* ===== BOTTOM BAR ===== */
+      .bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--bar-height);
+        background: var(--bg-bar);
+        border-top: 2px solid var(--accent);
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 var(--spacing-xxl);
+        transition: transform var(--transition-normal);
+        user-select: none;
+        overflow: hidden;
+        gap: var(--spacing-sm);
+      }
+
+      .bottom-bar.hidden {
+        transform: translateY(calc(var(--bar-height) - 4px));
+      }
+
+      .hover-zone {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--hover-zone-height);
+        z-index: 5;
+        pointer-events: auto;
+        cursor: default;
+        background: transparent;
+      }
+
+      /* Connection block */
+      .conn-block {
+        display: flex;
+        align-items: center;
+        padding: 0 var(--spacing-xs);
+        flex-shrink: 0;
+        margin-left: var(--spacing-xxl);
+        margin-right: var(--spacing-sm);
+        gap: var(--spacing-sm);
+      }
+
+      .conn-status {
+        white-space: nowrap;
+        font-size: 12px;
+        color: var(--text-dim);
+        text-align: left;
+        flex-shrink: 0;
+        min-width: 140px;
+      }
+
+      /* ===== BUTTONS - BASE STYLES ===== */
+      button {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--border);
+        background: var(--bg-input);
+        color: var(--text-main);
+        transition:
+          background var(--transition-fast),
+          border-color var(--transition-fast);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-xs);
+      }
+
+      button:hover:not(:disabled) {
+        background: #333;
+        border-color: #444;
+      }
+
+      button:active:not(:disabled) {
+        background: #222;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Button variants */
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+
+      button.primary:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+
+      button.tab-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-dim);
+        height: var(--bar-height);
+        border-radius: 0;
+        border-bottom: 2px solid transparent;
+        padding: 0 var(--spacing-lg);
+        font-weight: normal;
+      }
+
+      button.tab-btn:hover {
+        color: var(--text-main);
+      }
+
+      button.tab-btn.active {
+        color: #fff;
+        border-bottom-color: var(--accent);
+        background: rgba(0, 120, 212, 0.15);
+      }
+
+      /* Quick connect button (bottom bar) */
+      button.bottom-connect-btn {
+        width: 100px !important;
+        height: var(--button-height-sm);
+        padding: 0 var(--spacing-sm) !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: var(--bg-input);
+        color: var(--text-main);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        flex-shrink: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      button.bottom-connect-btn:hover:not(:disabled) {
+        background: #333;
+        border-color: #555;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      button.bottom-connect-btn:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: none;
+      }
+
+      button.bottom-connect-btn.connected {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #fff;
+      }
+      button.bottom-connect-btn.connected:hover:not(:disabled) {
+        background: #b02a28;
+        border-color: #b02a28;
+      }
+
+      button.bottom-connect-btn.ready {
+        background: var(--success);
+        border-color: var(--success);
+        color: #fff;
+      }
+      button.bottom-connect-btn.ready:hover:not(:disabled) {
+        background: #218838;
+        border-color: #1e7e34;
+      }
+
+      button.bottom-connect-btn.disabled {
+        background: var(--bg-input);
+        border-color: var(--border);
+        color: var(--text-dim);
+      }
+
+      /* Play/Stop button */
+      .play-stop-btn {
+        width: 34px;
+        height: var(--button-height-lg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: background var(--transition-fast);
+        padding: 0;
+      }
+
+      .play-stop-btn:hover {
+        background: var(--accent-hover);
+      }
+
+      .play-stop-btn.stop {
+        background: var(--danger);
+        border-color: var(--danger);
+      }
+
+      .play-stop-btn.stop:hover {
+        background: #b02a28;
+      }
+
+      /* Power buttons */
+      .pwr-btn {
+        width: 28px;
+        height: var(--button-height-md);
+        padding: 0;
+        text-align: center;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      /* Toggle button */
+      .toggle-btn {
+        width: 36px;
+        height: var(--button-height-md);
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-dim);
+        font-size: 16px;
+      }
+
+      .toggle-btn:hover {
+        color: var(--text-main);
+        background: var(--bg-input);
+        border-radius: 4px;
+      }
+
+      /* ===== FORM ELEMENTS ===== */
+      label {
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+
+      input,
+      select {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        color: var(--text-main);
+        font-size: 13px;
+      }
+
+      input:focus,
+      select:focus {
+        outline: 1px solid var(--accent);
+        border-color: var(--accent);
+      }
+
+      /* ===== LAYOUT UTILITIES ===== */
+      .row {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        flex-wrap: wrap;
+      }
+
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        flex: 1;
+        min-width: 140px;
+      }
+
+      .panel-box {
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: var(--spacing-sm) var(--spacing-lg);
+      }
+
+      .pwr-row {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 13px;
+      }
+
+      .control-row {
+        display: flex;
+        width: 100%;
+        gap: var(--spacing-sm);
+        align-items: center;
+      }
+
+      .progress-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+      }
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        font-size: 12px;
+        color: var(--text-dim);
+        padding: 0 var(--spacing-xs);
+      }
+
+      .info-text {
+        white-space: nowrap;
+      }
+
+      /* ===== PROGRESS BAR ===== */
+      .progress-bar {
+        width: 100%;
+        height: 6px;
+        appearance: none;
+        background: #333;
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+      }
+
+      .progress-bar::-webkit-slider-thumb {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: none;
+      }
+
+      .progress-bar::-webkit-slider-thumb:hover {
+        background: var(--accent-hover);
+      }
+
+      /* ===== ERROR MESSAGES ===== */
+      .error-msg {
+        color: var(--danger);
+        font-size: 12px;
+        display: none;
+      }
+
+      .error-msg:has(+ :not([style*="display: none"])) {
+        display: block;
+      }
+
+      /* ===== SCROLLBAR ===== */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-dark);
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #444;
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
+      /* ===== QUEUE ===== */
+      .queue-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: var(--bar-height);
+        width: 280px;
+        background: var(--bg-panel);
+        z-index: 15;
+        display: flex;
+        flex-direction: column;
+        transition: transform var(--transition-normal);
+        box-shadow: var(--shadow-video);
+      }
+      .queue-panel::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--accent);
+        z-index: 1;
+        pointer-events: none;
+      }
+      .queue-panel.hidden {
+        transform: translateX(calc(100% - 2px));
+      }
+      .app-container:not(.tabs-closed) .queue-panel {
+        bottom: var(--tabs-height);
+      }
+      .app-container:not(.tabs-closed) .queue-hover-zone {
+        height: calc(100vh - var(--tabs-height));
+      }
+
+      .queue-caption {
+        height: var(--bar-height);
+        background: var(--bg-bar);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 var(--spacing-md);
+        flex-shrink: 0;
+        user-select: none;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-main);
+      }
+
+      .queue-toggle-btn {
+        width: 28px;
+        height: var(--button-height-md);
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-dim);
+        font-size: 14px;
+        transition: color var(--transition-fast);
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+      .queue-toggle-btn:hover {
+        color: var(--text-main);
+        background: var(--bg-input);
+        border-radius: 4px;
+      }
+
+      .queue-hover-zone {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 22px;
+        height: calc(100vh - var(--bar-height));
+        z-index: 14;
+        pointer-events: auto;
+        cursor: default;
+        background: transparent;
+        transition: background var(--transition-fast);
+      }
+      .app-container:not(.tabs-closed) .queue-hover-zone {
+        height: calc(100vh - var(--tabs-height));
+      }
+      .queue-hover-zone:hover {
+        background: rgba(0, 120, 212, 0.1);
+      }
+
+      .queue-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--spacing-sm);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+      }
+
+      .queue-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: stretch;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: var(--spacing-xs);
+        min-height: 32px;
+      }
+      .queue-row:hover {
+        border-color: #555;
+      }
+      .queue-row.active {
+        border-color: var(--accent);
+        background: rgba(0, 120, 212, 0.15);
+        box-shadow: 0 0 0 1px var(--accent) inset;
+      }
+      .queue-row.active .queue-vidname:not([title="No video"]) {
+        color: var(--accent);
+        font-weight: 500;
+      }
+      .queue-row.active .queue-scriptname:not([title="No script"]) {
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      /* Queue sort, play, load */
+      .queue-left-group {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: var(--spacing-xs);
+        flex-wrap: nowrap;
+      }
+
+      .queue-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        align-items: center;
+        justify-content: center;
+      }
+      .queue-nav button {
+        width: 18px;
+        height: 14px;
+        padding: 0;
+        font-size: 8px;
+        line-height: 1;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .queue-actions {
+        display: flex;
+        flex-direction: row;
+        gap: var(--spacing-xs);
+        align-items: center;
+      }
+
+      .queue-playbtn {
+        width: 22px;
+        height: 25px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+        font-size: 10px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: background var(--transition-fast);
+        padding: 0;
+      }
+      .queue-playbtn:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+
+      .queue-loadbtn {
+        height: 25px;
+        padding: 0 4px;
+        font-size: 9px;
+        line-height: 1;
+        border-radius: 3px;
+        min-width: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .queue-fileinput {
+        display: none;
+      }
+
+      /* Queue file names */
+      .queue-names {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0;
+        min-width: 0;
+        padding: 0 var(--spacing-xs);
+        height: 100%;
+      }
+      .queue-vidname,
+      .queue-scriptname {
+        font-size: 11px;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.3;
+        display: block;
+        font-weight: normal;
+      }
+
+      .queue-deletebtn {
+        width: 25px;
+        height: 100%;
+        min-height: 25px;
+        padding: 0;
+        font-size: 10px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 3px;
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #fff;
+        cursor: pointer;
+        transition: background var(--transition-fast);
+      }
+      .queue-deletebtn:hover:not(:disabled) {
+        background: #b02a28;
+        border-color: #b02a28;
+      }
+      .queue-deletebtn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        background: var(--danger);
+      }
+
+      #plusQueueItem {
+        margin: var(--spacing-sm);
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+        font-size: 18px;
+        height: 32px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+      #plusQueueItem:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+
+      /* ===== RESPONSIVE ADJUSTMENTS ===== */
+      @media (max-width: 768px) {
+        .bottom-bar {
+          padding: 0 var(--spacing-lg);
+        }
+
+        .conn-block {
+          margin-left: var(--spacing-lg);
+          gap: var(--spacing-xs);
+        }
+
+        .conn-status {
+          min-width: 110px;
+          font-size: 11px;
+          overflow-x: auto;
+        }
+
+        button.bottom-connect-btn {
+          width: 90px !important;
+          font-size: 10px;
+        }
+      }
+
+      @media (max-width: 1024px) {
+        .queue-panel {
+          width: 240px;
+        }
+        .queue-row {
+          min-height: 30px;
+        }
+      }
+      @media (max-width: 768px) {
+        .queue-panel {
+          width: 200px;
+          transform: translateX(100%);
+        }
+        .queue-row {
+          min-height: 28px;
+        }
+        .queue-nav button {
+          width: 16px;
+          height: 12px;
+          font-size: 7px;
+        }
+        .queue-playbtn {
+          width: 20px;
+          height: 16px;
+          font-size: 9px;
+        }
+        .queue-loadbtn {
+          height: 16px;
+          padding: 0 3px;
+          font-size: 8px;
+          min-width: 26px;
+        }
+        .queue-deletebtn {
+          width: 28px;
+          font-size: 9px;
+        }
+      }
+
+      /* ===== UTILITY CLASSES ===== */
+      .empty {
+        opacity: 0.7;
+      }
+
+      /* Focus visible */
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* Reduce motion */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* ===== MODAL ===== */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-overlay.open {
+        display: flex !important;
+      }
+      .modal-content {
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 15px;
+        width: 340px;
+        box-shadow: var(--shadow-video);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container tabs-closed" id="app">
+      <div class="video-area">
+        <div class="video-inner">
+          <video id="mainVideo" controls playsinline></video>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUEUE -->
+    <div class="queue-panel hidden" id="queue-panel">
+      <div class="queue-caption">
+        <span>Queue</span
+        ><button
+          id="queue-toggle-btn"
+          class="queue-toggle-btn"
+          title="Toggle Queue Panel"
+        >
+          ▶
+        </button>
+      </div>
+      <div class="queue-container" id="queue-container"></div>
+      <button id="plusQueueItem" title="Add to queue">＋</button>
+      <input
+        type="file"
+        id="queue-file-input"
+        class="queue-fileinput"
+        style="display: none"
+        accept="video/*, .hwl, .funscript"
+        multiple
+      />
+    </div>
+    <div id="queue-hover-zone" class="queue-hover-zone"></div>
+
+    <!-- TABS PANELS -->
+    <div class="tabs-area open" id="tabs-area">
+      <!-- CONTROLS PANEL -->
+      <div class="tab-panel active" id="panel-controls">
+        <div
+          class="row"
+          style="align-items: flex-start; gap: 20px; flex-wrap: nowrap"
+        >
+          <div class="col" style="max-width: 280px; flex-shrink: 0">
+            <label>Power Levels</label>
+            <div class="pwr-row" style="margin-top: 4px">
+              <span style="font-size: 13px; min-width: 90px"
+                >Channel A: <span id="val-a">0 / 0</span></span
+              >
+              <button id="pwrA-" class="pwr-btn" onclick="decrementPower(0)">
+                −
+              </button>
+              <button id="pwrA+" class="pwr-btn" onclick="incrementPower(0)">
+                +
+              </button>
+            </div>
+            <div class="pwr-row">
+              <span style="font-size: 13px; min-width: 90px"
+                >Channel B: <span id="val-b">0 / 0</span></span
+              >
+              <button id="pwrB-" class="pwr-btn" onclick="decrementPower(1)">
+                −
+              </button>
+              <button id="pwrB+" class="pwr-btn" onclick="incrementPower(1)">
+                +
+              </button>
+            </div>
+          </div>
+          <div class="col">
+            <label>Options</label>
+            <div
+              class="panel-box"
+              style="
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
+                margin-top: 4px;
+              "
+            >
+              <button id="btn-mute" onclick="toggleMute(this)">Mute</button>
+              <button id="btn-swap" onclick="toggleSwap(this)">
+                Swap Channels
+              </button>
+              <button id="btn-auto" onclick="toggleAutoIncrease(this)">
+                Auto Increase
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY PANEL -->
+      <div class="tab-panel" id="panel-activity">
+        <div
+          class="row"
+          style="width: 100%; align-items: center; gap: var(--spacing-xxl)"
+        >
+          <!-- Size Controls -->
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+              flex-shrink: 0;
+            "
+          >
+            <div
+              style="display: flex; align-items: center; gap: var(--spacing-xs)"
+            >
+              <button
+                id="btn-fit"
+                style="
+                  min-width: 48px;
+                  height: 24px;
+                  padding: 0 8px;
+                  font-size: 11px;
+                "
+              >
+                ⛶ Fit
+              </button>
+              <button
+                id="btn-size-down"
+                style="width: 26px; height: 24px; padding: 0; font-size: 14px"
+              >
+                −
+              </button>
+              <button
+                id="btn-size-up"
+                style="width: 26px; height: 24px; padding: 0; font-size: 14px"
+              >
+                +
+              </button>
+            </div>
+            <label
+              style="
+                font-size: 10px;
+                color: var(--text-dim);
+                text-align: center;
+              "
+              >Video size</label
+            >
+          </div>
+
+          <!-- Play/Progress -->
+          <div
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+              min-width: 0;
+            "
+          >
+            <div
+              style="display: flex; align-items: center; gap: var(--spacing-sm)"
+            >
+              <button
+                id="playStopBtn"
+                class="play-stop-btn"
+                aria-label="Play"
+                style="flex-shrink: 0"
+              >
+                ▶
+              </button>
+              <div class="progress-wrapper" style="flex: 1; min-width: 0">
+                <input
+                  type="range"
+                  id="progressBar"
+                  class="progress-bar"
+                  min="0"
+                  max="100"
+                  value="0"
+                  step="0.1"
+                />
+              </div>
+            </div>
+            <div class="info-row" style="width: 100%">
+              <span id="timeDisplay" class="info-text">0:00 / 0:00</span>
+              <span id="playerState" class="info-text">Stopped</span>
+              <span id="fileStatus" class="info-text"
+                >No script/activity loaded</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Sync Controls, Activity Selector -->
+
+        <div
+          class="row"
+          style="
+            width: 100%;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+          "
+        >
+          <div
+            class="panel-box"
+            style="
+              flex: 1.1;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: var(--spacing-sm);
+            "
+          >
+            <input
+              type="checkbox"
+              id="syncScriptCheck"
+              style="margin: 0; flex-shrink: 0"
+            />
+            <label
+              for="syncScriptCheck"
+              style="font-size: 12px; cursor: pointer; flex: 1"
+              >Sync video with script</label
+            >
+            <button
+              id="resyncBtn"
+              style="padding: 4px 10px; font-size: 12px; flex-shrink: 0"
+            >
+              Manual sync
+            </button>
+            <button
+              id="load-url-btn"
+              style="padding: 4px 10px; font-size: 12px; flex-shrink: 0"
+            >
+              Load URL
+            </button>
+            <button
+              id="loadScriptBtn"
+              style="padding: 4px 10px; font-size: 12px; flex-shrink: 0"
+            >
+              Load video/script
+            </button>
+            <input
+              type="file"
+              id="script-file-input"
+              style="display: none"
+              accept="video/*, .hwl, .funscript"
+              multiple
+            />
+          </div>
+
+          <div
+            class="panel-box"
+            style="
+              flex: 1;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: var(--spacing-sm);
+            "
+          >
+            <select
+              id="activity-select"
+              style="flex: 1; padding: 4px 6px; font-size: 12px"
+            >
+              <option>Loading activities...</option>
+            </select>
+            <button
+              id="loadActivityBtn"
+              style="padding: 4px 10px; font-size: 12px; flex-shrink: 0"
+            >
+              Load activity
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONNECTION PANEL -->
+      <div class="tab-panel" id="panel-connection">
+        <div
+          class="row"
+          style="align-items: center; gap: 8px; flex-wrap: nowrap"
+        >
+          <label style="white-space: nowrap; flex-shrink: 0">IP Address</label>
+          <input
+            type="text"
+            id="ip-input"
+            placeholder="192.168.1.100"
+            style="flex: 2; min-width: 0"
+          />
+          <button id="btn-conn-toggle" class="primary" style="flex-shrink: 0">
+            Connect
+          </button>
+        </div>
+        <div
+          class="row"
+          style="align-items: center; gap: 8px; flex-wrap: nowrap"
+        >
+          <label style="white-space: nowrap; flex-shrink: 0">Access Key</label>
+          <input
+            type="text"
+            id="key-input"
+            placeholder="Enter access key"
+            style="flex: 2; min-width: 0"
+          />
+        </div>
+        <div id="connect-error" class="error-msg"></div>
+      </div>
+    </div>
+
+    <div class="bottom-bar" id="bottom-bar">
+      <div class="bar-tabs">
+        <button class="tab-btn active" data-target="panel-controls">
+          Controls
+        </button>
+        <button class="tab-btn" data-target="panel-activity">Activity</button>
+        <button class="tab-btn" data-target="panel-connection">
+          Connection
+        </button>
+      </div>
+      <div class="conn-block">
+        <button
+          id="bottom-connect-btn"
+          class="bottom-connect-btn"
+          title="Enter IP and Access Key to connect"
+        >
+          Connect
+        </button>
+        <span class="conn-status">Not connected</span>
+      </div>
+      <button id="toggle-bar" class="toggle-btn" title="Show Panel">▼</button>
+    </div>
+    <div id="hover-zone" class="hover-zone"></div>
+
+    <div id="url-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+          "
+        >
+          <span style="font-size: 13px; font-weight: 500">Load from URL</span>
+          <button
+            id="close-url-modal"
+            style="
+              background: transparent;
+              border: none;
+              color: var(--text-dim);
+              cursor: pointer;
+              font-size: 18px;
+              padding: 0;
+              line-height: 1;
+            "
+          >
+            ✕
+          </button>
+        </div>
+        <input
+          type="text"
+          id="url-input"
+          placeholder="https://example.com/video.mp4 or script.hwl"
+          style="width: 100%; margin-bottom: 10px"
+        />
+        <button
+          id="load-url-action"
+          class="primary"
+          style="width: 100%; height: 28px; font-size: 12px"
+        >
+          Load
+        </button>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        /**
+         * HOWL API LIBRARY
+         */
+        class HowlClient {
+          constructor() {
+            this.baseUrl = ""
+            this.accessToken = ""
+          }
+
+          configure(ip, token) {
+            this.baseUrl = `http://${ip}:4695`
+            this.accessToken = token
+          }
+
+          async _request(endpoint, body = {}) {
+            try {
+              const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${this.accessToken}`,
+                },
+                body: JSON.stringify(body),
+                signal: AbortSignal.timeout(5000),
+              })
+
+              if (!response) {
+                throw new Error("No response from server")
+              }
+
+              if (!response.ok) {
+                let errorMsg = `HTTP Error ${response.status}`
+                try {
+                  const errorData = await response.json()
+                  errorMsg = errorData.error?.message || errorMsg
+                } catch (e) {}
+                throw new Error(errorMsg)
+              }
+
+              return await response.json()
+            } catch (error) {
+              if (
+                error.name === "TypeError" &&
+                error.message === "Failed to fetch"
+              ) {
+                error.isNetworkError = true
+              } else if (
+                error.name === "AbortError" ||
+                error.name === "TimeoutError"
+              ) {
+                const timeoutError = new Error("Connection timeout")
+                timeoutError.isNetworkError = true
+                timeoutError.originalError = error
+                throw timeoutError
+              }
+              throw error
+            }
+          }
+
+          async getStatus() {
+            return this._request("/status")
+          }
+
+          async getAvailableActivities() {
+            return this._request("/available_activities")
+          }
+
+          async loadActivity(name) {
+            return this._request("/load_activity", { name: name, play: false })
+          }
+
+          async startPlayer(from = null) {
+            const body = from !== null ? { from } : {}
+            return this._request("/start_player", body)
+          }
+
+          async stopPlayer() {
+            return this._request("/stop_player")
+          }
+
+          async seek(position) {
+            return this._request("/seek", { position })
+          }
+
+          async loadFunscript(title, funscript) {
+            return this._request("/load_funscript", {
+              title: title,
+              play: false,
+              loop: false,
+              funscript: funscript,
+            })
+          }
+
+          async loadHwl(title, hwlBase64) {
+            return this._request("/load_hwl", {
+              title: title,
+              play: false,
+              loop: true,
+              hwl: hwlBase64,
+            })
+          }
+
+          async setPower(powerA, powerB) {
+            const body = {}
+            if (powerA !== undefined) body.power_a = powerA
+            if (powerB !== undefined) body.power_b = powerB
+            return this._request("/set_power", body)
+          }
+
+          async incrementPower(channel, step = 0) {
+            return this._request("/increment_power", { channel, step })
+          }
+
+          async decrementPower(channel, step = 0) {
+            return this._request("/decrement_power", { channel, step })
+          }
+
+          async setMute(value) {
+            const body = value !== undefined ? { value } : {}
+            return this._request("/set_mute", body)
+          }
+
+          async setSwapChannels(value) {
+            const body = value !== undefined ? { value } : {}
+            return this._request("/set_swap_channels", body)
+          }
+
+          async setAutoIncrease(value) {
+            const body = value !== undefined ? { value } : {}
+            return this._request("/set_auto_increase", body)
+          }
+
+          async setFreqRange(min, max) {
+            return this._request("/set_freq_range", { min, max })
+          }
+        }
+
+        /**
+         * APPLICATION LOGIC
+         */
+        const client = new HowlClient()
+        let state = {
+          options: {
+            power_a: 0,
+            power_b: 0,
+            power_a_limit: 0,
+            power_b_limit: 0,
+            mute: false,
+            swap_channels: false,
+            auto_increase_power: false,
+          },
+          player: {
+            playing: false,
+            position: 0,
+            title: "",
+            duration: 0,
+          },
+        }
+
+        let connectionState = {
+          status: "disconnected", // disconnected, connecting, connected, lost
+          lastSuccessfulPoll: null,
+          reconnectAttempts: 0,
+          maxReconnectAttempts: 5,
+          reconnectDelay: 1000,
+          isReconnecting: false,
+        }
+
+        let currentMediaType = "script" // 'activity' or 'script'
+
+        let availableActivities = []
+        let pollInterval = null
+        let scriptBuffer = {}
+
+        // Save
+        let saveState = {}
+        if (localStorage.getItem("saveState") != undefined) {
+          saveState = JSON.parse(localStorage.getItem("saveState"))
+        } else {
+          saveState = {
+            fitActive: true,
+            scale: 1,
+            syncScript: true,
+            ip: "",
+            accessKey: "",
+            barToggle: true,
+            volume: 1.0,
+            muted: false,
+            queueHidden: false,
+          }
+        }
+
+        const video = document.getElementById("mainVideo")
+        const app = document.getElementById("app")
+        const bottomBar = document.getElementById("bottom-bar")
+        const hoverZone = document.getElementById("hover-zone")
+        const toggleBtn = document.getElementById("toggle-bar")
+        const tabsArea = document.getElementById("tabs-area")
+        const connStatus = document.querySelector(".conn-status")
+
+        let isHidden = saveState.barToggle
+        let isTempShow = false
+        let hideTimeout
+        let isMouseOnBar = false
+        let scale = saveState.scale
+        let natW = 320,
+          natH = 180
+
+        // Layout & Resize Logic
+        let fitActive = true
+        const fitBtn = document.getElementById("btn-fit")
+
+        function applyScale(s) {
+          scale = Math.max(0.05, s)
+          video.style.width = `${natW * scale}px`
+          video.style.height = `${natH * scale}px`
+        }
+
+        function doFit() {
+          if (!fitActive) return
+
+          const area = document.querySelector(".video-area")
+          const queueOffset = saveState.queueHidden ? 0 : 281
+
+          const maxW = area.clientWidth - 20 - queueOffset
+          const maxH = area.clientHeight - 20
+
+          if (maxW <= 0 || maxH <= 0) return
+
+          const ratio = natW / natH
+          let w = maxW,
+            h = w / ratio
+
+          if (h > maxH) {
+            h = maxH
+            w = h * ratio
+          }
+
+          applyScale(w / natW)
+        }
+
+        function setFitActive(active) {
+          fitActive = active
+          if (active) {
+            fitBtn.classList.add("primary")
+            doFit()
+          } else {
+            fitBtn.classList.remove("primary")
+          }
+        }
+
+        function updateLayout() {
+          const tabsOpen = tabsArea.classList.contains("open")
+          if (tabsOpen) {
+            app.style.paddingBottom = "150px"
+            app.classList.remove("tabs-closed")
+          } else {
+            app.style.paddingBottom = ""
+            app.classList.add("tabs-closed")
+          }
+          if (fitActive) setTimeout(doFit, 320)
+          updateAppPadding()
+          if (queuePanel) {
+            queuePanel.style.bottom = tabsOpen
+              ? "var(--tabs-height)"
+              : "var(--bar-height)"
+          }
+          if (queueHoverZone) {
+            queueHoverZone.style.height = tabsOpen
+              ? "calc(100vh - var(--tabs-height))"
+              : "calc(100vh - var(--bar-height))"
+          }
+        }
+
+        window.addEventListener("resize", () => {
+          if (fitActive) doFit()
+        })
+
+        video.addEventListener("loadedmetadata", () => {
+          natW = video.videoWidth || 320
+          natH = video.videoHeight || 180
+          if (fitActive) doFit()
+          else applyScale(scale)
+
+          if (saveState.volume !== undefined) {
+            video.volume = Math.max(0, Math.min(1, saveState.volume))
+          }
+          if (saveState.muted !== undefined) {
+            video.muted = saveState.muted
+          }
+
+          updateResyncBtnState()
+        })
+
+        video.addEventListener("volumechange", () => {
+          saveState.volume = video.volume
+          saveState.muted = video.muted
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+        })
+
+        // Size buttons
+        fitBtn.onclick = () => {
+          setFitActive(!fitActive)
+          saveState.fitActive = fitActive
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+        }
+        document.getElementById("btn-size-up").onclick = () => {
+          setFitActive(false)
+          applyScale(scale * 1.15)
+          saveState.fitActive = false
+          saveState.scale = scale
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+        }
+        document.getElementById("btn-size-down").onclick = () => {
+          setFitActive(false)
+          applyScale(scale / 1.15)
+          saveState.fitActive = false
+          saveState.scale = scale
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+        }
+
+        requestAnimationFrame(() => {
+          if (saveState.fitActive) {
+            setFitActive(true)
+          } else {
+            setFitActive(false)
+            applyScale(saveState.scale)
+          }
+          updateBottomConnectBtn()
+        })
+
+        // Video queue
+        class VideoQueueItem {
+          constructor(videoName = "No video", scriptName = "No script") {
+            this.videoFile = null
+            this.scriptFile = null
+            this.videoName = videoName
+            this.scriptName = scriptName
+          }
+          render(index, isLastItem) {
+            const row = document.createElement("div")
+            row.className = "queue-row"
+            row.dataset.index = index
+            const deleteDisabled = isLastItem
+              ? 'disabled title="Keep at least one item"'
+              : ""
+            const downDisabled = index === vidQueue.length - 1 ? "disabled" : ""
+            const upDisabled = index === 0 ? "disabled" : ""
+            row.innerHTML = `<div class="queue-left-group"><div class="queue-nav">
+              <button class="queue-upbtn" ${upDisabled} title="Move up">▲</button>
+              <button class="queue-downbtn" ${downDisabled} title="Move down">▼</button></div>
+              <div class="queue-actions">
+                <button class="queue-playbtn" title="Play from here">▶</button>
+                <button class="queue-loadbtn" title="Load files">Load</button></div>
+              <input type="file" class="queue-fileinput" accept="video/*, .hwl, .funscript" multiple /></div>
+              <div class="queue-names">
+                <span class="queue-vidname" title="${this.escapeHtml(this.videoName)}">${this.escapeHtml(this.videoName)}</span>
+                <span class="queue-scriptname" title="${this.escapeHtml(this.scriptName)}">${this.escapeHtml(this.scriptName)}</span></div>
+              <button class="queue-deletebtn" ${deleteDisabled}>Del</button>`
+            return row
+          }
+          escapeHtml(t) {
+            const d = document.createElement("div")
+            d.textContent = t
+            return d.innerHTML
+          }
+        }
+
+        const queueContainer = document.getElementById("queue-container"),
+          queuePanel = document.getElementById("queue-panel"),
+          queueToggleBtn = document.getElementById("queue-toggle-btn"),
+          queueHoverZone = document.getElementById("queue-hover-zone"),
+          queuePlusBtn = document.getElementById("plusQueueItem")
+
+        let vidQueue = []
+        let activeQueue = []
+        let activeQueueIndex = -1
+        let queueHideTimeout
+        let isMouseOnQueuePanel = false
+        let isQueueTempShow = false
+
+        //renderQueue()
+        applyQueuePanelState()
+        setupQueueEvents()
+
+        function handleQueueFiles(files, targetIndex = vidQueue.length) {
+          const fileArray = Array.from(files || [])
+          if (!fileArray.length) return
+
+          const vids = fileArray.filter((f) => f.type.startsWith("video/"))
+          const scripts = fileArray.filter((f) => {
+            const n = f.name.toLowerCase()
+            return n.endsWith(".funscript") || n.endsWith(".hwl")
+          })
+          if (!vids.length && !scripts.length) return
+
+          if (
+            vidQueue.length === 0 &&
+            (vids.length > 0 || scripts.length > 0)
+          ) {
+            const firstVid = vids[0]
+            const firstScript = scripts[0]
+
+            const item = new VideoQueueItem(
+              firstVid ? firstVid.name : "No video",
+              firstScript ? firstScript.name : "No script",
+            )
+            if (firstVid) item.videoFile = firstVid
+            if (firstScript) item.scriptFile = firstScript
+
+            vidQueue.push(item)
+
+            if (firstVid) vids.shift()
+            if (firstScript) scripts.shift()
+
+            targetIndex = vidQueue.length
+          }
+
+          vids.forEach((v, i) => {
+            const actualIndex =
+              i === 0 && targetIndex < vidQueue.length
+                ? targetIndex
+                : vidQueue.length
+
+            let item
+            if (vidQueue[actualIndex]) {
+              item = vidQueue[actualIndex]
+              const existingScript = item.scriptFile
+              const existingScriptName = item.scriptName
+
+              item.videoFile = null
+              item.videoName = "No video"
+
+              if (existingScript) {
+                item.scriptFile = existingScript
+                item.scriptName = existingScriptName
+              }
+            } else {
+              item = new VideoQueueItem(v.name, "No script")
+            }
+
+            const vidBaseName = v.name.replace(/\.[^.]+$/, "")
+
+            for (let j = 0; j < scripts.length; j++) {
+              const scriptBaseName = scripts[j].name.replace(/\.[^.]+$/, "")
+              if (vidBaseName === scriptBaseName) {
+                item.scriptFile = scripts[j]
+                item.scriptName = scripts[j].name
+                scripts.splice(j, 1)
+                break
+              }
+            }
+
+            item.videoFile = v
+            item.videoName = v.name
+
+            if (!vidQueue[actualIndex]) {
+              vidQueue.push(item)
+            }
+          })
+
+          scripts.forEach((s) => {
+            const item = new VideoQueueItem("No video", s.name)
+            item.scriptFile = s
+            vidQueue.push(item)
+          })
+
+          renderQueue()
+        }
+
+        function renderQueue() {
+          if (!queueContainer) return
+          queueContainer.innerHTML = ""
+          vidQueue.forEach((item, index) => {
+            const isLastItem = vidQueue.length === 1
+            const element = item.render(index, isLastItem)
+
+            const isActive =
+              activeQueue.length > 0 &&
+              activeQueueIndex >= 0 &&
+              activeQueue[activeQueueIndex] === item
+            if (isActive) element.classList.add("active")
+
+            queueContainer.appendChild(element)
+          })
+          updateQueueNavButtons()
+        }
+
+        function advanceQueue() {
+          if (
+            activeQueue.length > 0 &&
+            activeQueueIndex < activeQueue.length - 1
+          ) {
+            activeQueueIndex++
+            const next = activeQueue[activeQueueIndex]
+
+            if (next?.videoFile) loadVideo(URL.createObjectURL(next.videoFile))
+
+            if (next?.scriptFile) {
+              scriptBuffer = next.scriptFile
+            } else {
+              scriptBuffer = {}
+            }
+
+            updateUI()
+            renderQueue()
+
+            if (next?.scriptFile && isConnected) {
+              sendScript(scriptBuffer).then(() => {
+                client.startPlayer().catch(() => {})
+                if (next?.videoFile && video.paused) {
+                  video.play().catch(() => {})
+                }
+                setTimeout(updateUI, 150)
+              })
+            } else {
+              if (isConnected) {
+                client.startPlayer().catch(() => {})
+              }
+              if (next?.videoFile && video.paused) {
+                video.play().catch(() => {})
+              }
+              if (isConnected) {
+                setTimeout(updateUI, 150)
+              }
+            }
+          } else if (activeQueue.length > 0) {
+            activeQueue = []
+            activeQueueIndex = -1
+            scriptBuffer = {}
+            renderQueue()
+          }
+        }
+
+        function updateQueueNavButtons() {
+          if (!queueContainer) return
+          queueContainer.querySelectorAll(".queue-row").forEach((row, idx) => {
+            const upBtn = row.querySelector(".queue-upbtn"),
+              downBtn = row.querySelector(".queue-downbtn"),
+              deleteBtn = row.querySelector(".queue-deletebtn")
+            if (upBtn) upBtn.disabled = idx === 0
+            if (downBtn) downBtn.disabled = idx === vidQueue.length - 1
+            if (deleteBtn) {
+              const last = vidQueue.length === 1
+              deleteBtn.disabled = last
+              deleteBtn.title = last ? "Keep at least one item" : "Remove"
+            }
+          })
+        }
+
+        function applyQueuePanelState() {
+          if (!queuePanel || !queueToggleBtn) return
+          if (saveState.queueHidden) {
+            queuePanel.classList.add("hidden")
+            queueToggleBtn.textContent = "◀"
+            queueToggleBtn.title = "Show Queue Panel"
+          } else {
+            queuePanel.classList.remove("hidden")
+            queueToggleBtn.textContent = "▶"
+            queueToggleBtn.title = "Hide Queue Panel"
+          }
+          updateAppPadding()
+        }
+
+        function updateAppPadding() {
+          const va = document.querySelector(".video-area")
+          if (!va) return
+          va.style.paddingRight = (saveState.queueHidden ? 0 : 281) + "px"
+          if (fitActive) doFit()
+        }
+
+        function toggleQueuePanel() {
+          saveState.queueHidden = !saveState.queueHidden
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+          applyQueuePanelState()
+          if (fitActive) doFit()
+        }
+
+        function startQueueHideTimer() {
+          if (
+            saveState.queueHidden &&
+            isQueueTempShow &&
+            !isMouseOnQueuePanel
+          ) {
+            clearTimeout(queueHideTimeout)
+            queueHideTimeout = setTimeout(() => {
+              if (queuePanel) queuePanel.classList.add("hidden")
+              isQueueTempShow = false
+              if (fitActive) doFit()
+            }, 2000)
+          }
+        }
+        function cancelQueueHideTimer() {
+          clearTimeout(queueHideTimeout)
+          if (saveState.queueHidden && queuePanel) {
+            queuePanel.classList.remove("hidden")
+            isQueueTempShow = true
+          }
+        }
+
+        function setupQueueEvents() {
+          if (queueToggleBtn)
+            queueToggleBtn.addEventListener("click", (e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              toggleQueuePanel()
+            })
+          if (queueHoverZone) {
+            queueHoverZone.addEventListener("mouseenter", () => {
+              if (saveState.queueHidden) cancelQueueHideTimer()
+            })
+            queueHoverZone.addEventListener("mouseleave", () => {
+              if (saveState.queueHidden && isQueueTempShow)
+                startQueueHideTimer()
+            })
+            queueHoverZone.addEventListener("click", (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              if (saveState.queueHidden) {
+                saveState.queueHidden = false
+                localStorage.setItem("saveState", JSON.stringify(saveState))
+                applyQueuePanelState()
+              }
+            })
+          }
+          if (queuePanel) {
+            queuePanel.addEventListener("mouseenter", () => {
+              isMouseOnQueuePanel = true
+              clearTimeout(queueHideTimeout)
+              if (saveState.queueHidden) {
+                queuePanel.classList.remove("hidden")
+                isQueueTempShow = true
+              }
+            })
+            queuePanel.addEventListener("mouseleave", () => {
+              isMouseOnQueuePanel = false
+              if (saveState.queueHidden) startQueueHideTimer()
+            })
+          }
+          if (queuePlusBtn) {
+            queuePlusBtn.addEventListener("click", () => {
+              const fileInput = document.getElementById("queue-file-input")
+              if (!fileInput) return
+
+              fileInput.value = ""
+              fileInput.dataset.targetIndex = vidQueue.length.toString()
+
+              fileInput.click()
+            })
+          }
+          if (queueContainer) {
+            queueContainer.addEventListener("click", (e) => {
+              const t = e.target,
+                row = t.closest(".queue-row")
+              if (!row) return
+              const idx = parseInt(row.dataset.index)
+              if (isNaN(idx)) return
+              if (
+                t.classList.contains("queue-deletebtn") &&
+                vidQueue.length > 1
+              ) {
+                vidQueue.splice(idx, 1)
+                renderQueue()
+                return
+              }
+              if (t.classList.contains("queue-upbtn") && idx > 0) {
+                ;[vidQueue[idx], vidQueue[idx - 1]] = [
+                  vidQueue[idx - 1],
+                  vidQueue[idx],
+                ]
+                renderQueue()
+                return
+              }
+              if (
+                t.classList.contains("queue-downbtn") &&
+                idx < vidQueue.length - 1
+              ) {
+                ;[vidQueue[idx], vidQueue[idx + 1]] = [
+                  vidQueue[idx + 1],
+                  vidQueue[idx],
+                ]
+                renderQueue()
+                return
+              }
+              if (t.classList.contains("queue-loadbtn")) {
+                const fi = row.querySelector(".queue-fileinput")
+                if (fi) {
+                  fi.value = ""
+                  fi.click()
+                }
+                return
+              }
+              if (t.classList.contains("queue-playbtn")) {
+                activeQueue = vidQueue.slice(idx)
+                activeQueueIndex = 0
+
+                if (activeQueue[0]?.videoFile)
+                  loadVideo(URL.createObjectURL(activeQueue[0].videoFile))
+
+                if (activeQueue[0]?.scriptFile) {
+                  scriptBuffer = activeQueue[0].scriptFile
+                } else {
+                  scriptBuffer = {}
+                }
+
+                updateUI()
+                renderQueue()
+
+                if (activeQueue[0]?.scriptFile && isConnected) {
+                  sendScript(scriptBuffer)
+                    .then(() => {
+                      client.startPlayer().catch(() => {})
+                      if (activeQueue[0]?.videoFile && video.paused) {
+                        video.play().catch(() => {})
+                      }
+                      setTimeout(updateUI, 150)
+                    })
+                    .catch((err) => {
+                      console.error("Failed to load script:", err)
+                      if (activeQueue[0]?.videoFile && video.paused) {
+                        video.play().catch(() => {})
+                      }
+                    })
+                } else {
+                  if (isConnected) {
+                    client.startPlayer().catch(() => {})
+                  }
+                  if (activeQueue[0]?.videoFile && video.paused) {
+                    video.play().catch(() => {})
+                  }
+                  if (isConnected) {
+                    setTimeout(updateUI, 150)
+                  }
+                }
+
+                return
+              }
+            })
+
+            queueContainer.addEventListener("change", (e) => {
+              if (!e.target.classList.contains("queue-fileinput")) return
+              const row = e.target.closest(".queue-row")
+              const idx = parseInt(row?.dataset.index)
+              if (isNaN(idx)) return
+
+              handleQueueFiles(e.target.files, idx)
+
+              e.target.value = ""
+            })
+          }
+        }
+
+        const queueInput = document.getElementById("queue-file-input")
+        if (queueInput) {
+          queueInput.addEventListener("change", (e) => {
+            const targetIndex = parseInt(
+              e.target.dataset.targetIndex || vidQueue.length,
+            )
+            handleQueueFiles(e.target.files, targetIndex)
+          })
+        }
+
+        video.addEventListener("ended", () => {
+          if (!isConnected && activeQueue.length > 0) {
+            advanceQueue()
+          }
+        })
+
+        // Bar Toggle
+        function setBarVisibility(forceShow = false) {
+          if (forceShow || !isHidden) {
+            isHidden = false
+            bottomBar.classList.remove("hidden")
+            app.classList.remove("bar-hidden")
+            toggleBtn.textContent = "▼"
+            isTempShow = false
+            clearTimeout(hideTimeout)
+          } else {
+            isHidden = true
+            bottomBar.classList.add("hidden")
+            app.classList.add("bar-hidden")
+            toggleBtn.textContent = "▲"
+          }
+          updateLayout()
+        }
+
+        const startHideTimer = () => {
+          if (isHidden && isTempShow && !isMouseOnBar) {
+            clearTimeout(hideTimeout)
+            hideTimeout = setTimeout(() => {
+              bottomBar.classList.add("hidden")
+              isTempShow = false
+              updateLayout()
+            }, 2000)
+          }
+        }
+
+        const cancelHideTimer = () => {
+          clearTimeout(hideTimeout)
+          if (isHidden) {
+            bottomBar.classList.remove("hidden")
+            isTempShow = true
+          }
+        }
+
+        toggleBtn.addEventListener("click", (e) => {
+          e.stopPropagation()
+          isHidden = !isHidden
+          setBarVisibility(!isHidden)
+          saveState.barToggle = isHidden
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+        })
+
+        // Hover zone triggers
+        hoverZone.addEventListener("mouseenter", cancelHideTimer)
+        hoverZone.addEventListener("mouseleave", startHideTimer)
+        const revealBar = (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          isHidden = false
+          setBarVisibility(true)
+        }
+        hoverZone.addEventListener("click", revealBar)
+        hoverZone.addEventListener("touchstart", revealBar, { passive: false })
+
+        // Bar hover triggers
+        bottomBar.addEventListener("mouseenter", () => {
+          isMouseOnBar = true
+          clearTimeout(hideTimeout)
+          if (isHidden) {
+            bottomBar.classList.remove("hidden")
+            isTempShow = true
+          }
+        })
+        bottomBar.addEventListener("mouseleave", () => {
+          isMouseOnBar = false
+          startHideTimer()
+        })
+
+        setBarVisibility(!isHidden)
+
+        // Tab Switching
+        document.querySelectorAll(".tab-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation()
+            const target = btn.dataset.target
+            const panel = document.getElementById(target)
+            const isActive = panel.classList.contains("active")
+
+            // Hide tabs
+            if (isActive && tabsArea.classList.contains("open")) {
+              tabsArea.classList.remove("open")
+              app.classList.add("tabs-closed")
+              document
+                .querySelectorAll(".tab-panel")
+                .forEach((p) => p.classList.remove("active"))
+              document
+                .querySelectorAll(".tab-btn")
+                .forEach((b) => b.classList.remove("active"))
+              updateLayout()
+              return
+            }
+
+            // Switch tab
+            tabsArea.classList.add("open")
+            app.classList.remove("tabs-closed")
+            document
+              .querySelectorAll(".tab-btn")
+              .forEach((b) => b.classList.remove("active"))
+            document
+              .querySelectorAll(".tab-panel")
+              .forEach((p) => p.classList.remove("active"))
+            btn.classList.add("active")
+            panel.classList.add("active")
+            updateLayout()
+          })
+        })
+
+        // Video Loading
+        const loadVideo = (src) => {
+          video.src = src
+          video.load()
+
+          if (syncScriptCheck.checked && isConnected && state.player.title) {
+            client.seek(0).catch(() => {})
+          }
+        }
+
+        // Connection
+        const inputIp = document.getElementById("ip-input")
+        const inputKey = document.getElementById("key-input")
+        const connToggle = document.getElementById("btn-conn-toggle")
+        const bottomConnectBtn = document.getElementById("bottom-connect-btn")
+        const errorDiv = document.getElementById("connect-error")
+        let isConnected = false
+
+        inputIp.value = saveState.ip
+        inputIp.addEventListener("change", () => {
+          saveState.ip = inputIp.value.trim()
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+          updateBottomConnectBtn()
+        })
+
+        inputKey.value = saveState.accessKey
+        inputKey.addEventListener("change", () => {
+          saveState.accessKey = inputKey.value.trim()
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+          updateBottomConnectBtn()
+        })
+        inputKey.addEventListener("input", updateBottomConnectBtn)
+
+        updateBottomConnectBtn()
+
+        connToggle.addEventListener("click", async () => {
+          if (isConnected) {
+            // Manual disconnect
+            stopPolling()
+            connectionState.status = "disconnected"
+            connectionState.reconnectAttempts = 0
+            lastManualSeekTime = 0
+            clearError()
+
+            // Reset UI
+            updateConnectionUI("Not connected", "")
+            controlsDisable(true)
+            isConnected = false
+            connToggle.textContent = "Connect"
+            connToggle.classList.add("primary")
+            connToggle.style.borderColor = ""
+            connToggle.style.color = ""
+            connToggle.style.background = ""
+
+            updateBottomConnectBtn()
+
+            availableActivities = []
+            activitySelect.innerHTML =
+              '<option value="">Loading activities...</option>'
+
+            currentMediaType = "script"
+
+            updateResyncBtnState()
+          } else {
+            clearError()
+            const ip = inputIp.value.trim()
+            const key = inputKey.value.trim()
+
+            if (!ip) {
+              showError("Please enter an IP address.")
+              return
+            }
+
+            client.configure(ip, key)
+
+            try {
+              const response = await client.getStatus()
+
+              state = response
+              connectionState.status = "connected"
+              connectionState.lastSuccessfulPoll = Date.now()
+              startPolling()
+
+              updateUI()
+
+              if (
+                isConnected &&
+                syncScriptCheck.checked &&
+                state.player.title
+              ) {
+                setTimeout(() => {
+                  client
+                    .seek(video.currentTime)
+                    .then(() => {
+                      if (!video.paused && video.readyState >= 2) {
+                        return client.startPlayer()
+                      }
+                    })
+                    .catch((err) => console.error("Connect sync error:", err))
+                }, 100)
+              }
+
+              isConnected = true
+              if (scriptBuffer == {}) {
+                sendScript(scriptBuffer)
+              }
+
+              updateConnectionUI(`Connected to ${ip}`, "var(--success)")
+              connToggle.textContent = "Disconnect"
+              connToggle.classList.remove("primary")
+              connToggle.style.borderColor = "var(--danger)"
+              connToggle.style.color = "var(--danger)"
+              connToggle.style.background = "transparent"
+
+              updateBottomConnectBtn()
+              controlsDisable(false)
+
+              // Fetch available activities once on connect
+              try {
+                const activitiesResponse = await client.getAvailableActivities()
+                availableActivities = activitiesResponse.activities || []
+                populateActivityDropdown(availableActivities)
+              } catch (err) {
+                console.error("Failed to fetch activities:", err)
+                availableActivities = []
+                populateActivityDropdown([])
+              }
+            } catch (err) {
+              if (err.isNetworkError) {
+                showError(`Cannot reach server at ${ip}. Check IP and network.`)
+              } else {
+                showError(`Connection failed: ${err.message}`)
+              }
+            }
+            updateResyncBtnState()
+          }
+        })
+
+        function updateBottomConnectBtn() {
+          const hasIp = inputIp.value.trim().length > 0
+          const hasKey = inputKey.value.trim().length > 0
+          const canConnect = hasIp && hasKey
+
+          bottomConnectBtn.disabled = !canConnect
+
+          if (!canConnect) {
+            bottomConnectBtn.title = "Enter IP and Access Key to connect"
+          } else if (isConnected) {
+            bottomConnectBtn.title = "Disconnect"
+          } else {
+            bottomConnectBtn.title = "Connect"
+          }
+
+          bottomConnectBtn.classList.remove("connected", "ready", "disabled")
+          if (!canConnect) {
+            bottomConnectBtn.classList.add("disabled")
+            bottomConnectBtn.textContent = "Connect"
+          } else if (isConnected) {
+            bottomConnectBtn.classList.add("connected")
+            bottomConnectBtn.textContent = "Disconnect"
+          } else {
+            bottomConnectBtn.classList.add("ready")
+            bottomConnectBtn.textContent = "Connect"
+          }
+        }
+        bottomConnectBtn.addEventListener("click", () => {
+          connToggle.click()
+        })
+
+        // --- Power and options ---
+
+        async function handleApiCall(promise) {
+          try {
+            const response = await promise
+            state = response
+            updateUI()
+          } catch (err) {
+            console.error("API Error:", err)
+            showError(`Error: ${err.message}`)
+          }
+        }
+
+        window.incrementPower = function (channel) {
+          handleApiCall(client.incrementPower(channel, 1))
+        }
+
+        window.decrementPower = function (channel) {
+          handleApiCall(client.decrementPower(channel, 1))
+        }
+
+        window.toggleMute = function (btn) {
+          handleApiCall(client.setMute())
+        }
+
+        window.toggleSwap = function (btn) {
+          handleApiCall(client.setSwapChannels())
+        }
+
+        window.toggleAutoIncrease = function (btn) {
+          handleApiCall(client.setAutoIncrease())
+        }
+
+        const powerADisplay = document.getElementById("val-a")
+        const powerBDisplay = document.getElementById("val-b")
+        const btnAP = document.getElementById("pwrA+")
+        const btnAM = document.getElementById("pwrA-")
+        const btnBP = document.getElementById("pwrB+")
+        const btnBM = document.getElementById("pwrB-")
+        const btnMute = document.getElementById("btn-mute")
+        const btnSwap = document.getElementById("btn-swap")
+        const btnAuto = document.getElementById("btn-auto")
+
+        btnAP.disabled = true
+        btnAM.disabled = true
+        btnBP.disabled = true
+        btnBM.disabled = true
+        btnMute.disabled = true
+        btnSwap.disabled = true
+        btnAuto.disabled = true
+
+        // --- Scripts and activity ---
+        const progressBar = document.getElementById("progressBar")
+        const playStopBtn = document.getElementById("playStopBtn")
+        const stateBadge = document.getElementById("playerState")
+        const timeDisplay = document.getElementById("timeDisplay")
+        const fileStatus = document.getElementById("fileStatus")
+        const syncScriptCheck = document.getElementById("syncScriptCheck")
+        const loadScriptBtn = document.getElementById("loadScriptBtn")
+        const resyncBtn = document.getElementById("resyncBtn")
+        const scriptInput = document.getElementById("script-file-input")
+        const activitySelect = document.getElementById("activity-select")
+        const loadActivityBtn = document.getElementById("loadActivityBtn")
+
+        syncScriptCheck.checked = saveState.syncScript
+        syncScriptCheck.addEventListener("change", applySyncCheckboxState)
+
+        applySyncCheckboxState()
+        updateResyncBtnState()
+        if (!syncScriptCheck.checked && isConnected) {
+          playStopBtn.disabled = false
+        }
+
+        function applySyncCheckboxState() {
+          saveState.syncScript = syncScriptCheck.checked
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+
+          if (syncScriptCheck.checked) {
+            playStopBtn.disabled = true
+            if (isConnected) {
+              videoSync(true)
+            }
+          } else {
+            playStopBtn.disabled = !isConnected
+          }
+          updateResyncBtnState()
+        }
+
+        let syncLock = false
+        let lastSyncedVideoTime = -1
+        let lastManualSeekTime = 0
+
+        async function videoSync(force = false) {
+          if (syncLock) return
+          syncLock = true
+
+          try {
+            const duration = state.player.duration || 0
+            const videoTime = video.currentTime
+
+            if (
+              !state.player.title ||
+              !state.player.duration ||
+              isNaN(videoTime) ||
+              videoTime < 0
+            ) {
+              syncLock = false
+              return
+            }
+
+            const isVideoPlaying =
+              !video.paused && !video.ended && video.readyState >= 2
+            const isScriptPlaying = state.player.playing
+
+            if (force || Math.abs(videoTime - lastSyncedVideoTime) > 0.3) {
+              lastSyncedVideoTime = videoTime
+
+              await client.seek(videoTime)
+
+              if (isVideoPlaying) {
+                await client.startPlayer()
+              } else {
+                await client.stopPlayer()
+              }
+              return
+            }
+
+            if (isVideoPlaying && isScriptPlaying) {
+              const drift = Math.abs(videoTime - state.player.position)
+              if (drift > 0.5) {
+                video.pause()
+                await client.stopPlayer()
+
+                await client.seek(videoTime)
+                await new Promise((resolve) => setTimeout(resolve, 50))
+
+                video.play().catch(() => {})
+                await client.startPlayer()
+                lastSyncedVideoTime = videoTime
+              }
+            }
+          } catch (err) {
+            console.error("Sync error:", err)
+          } finally {
+            setTimeout(() => {
+              syncLock = false
+            }, 100)
+          }
+        }
+
+        resyncBtn.addEventListener("click", () => {
+          videoSync(true)
+        })
+
+        function updateResyncBtnState() {
+          const shouldEnable =
+            isConnected && // Server is connected
+            currentMediaType === "script" && // Script mode (not activity)
+            state.player?.title && // Media is loaded
+            state.player?.duration > 0 && // Duration is known
+            !isNaN(video?.currentTime) // Video element is ready
+
+          resyncBtn.disabled = !shouldEnable
+        }
+
+        function isScriptComplete() {
+          const p = state.player
+          if (!p.title || !p.duration || p.duration <= 0) return false
+          return !p.playing && p.position >= p.duration - 0.5
+        }
+
+        video.addEventListener("pause", () => {
+          if (syncScriptCheck.checked && isConnected) {
+            client.stopPlayer().catch(() => {})
+          }
+        })
+
+        video.addEventListener("seeked", () => {
+          if (syncScriptCheck.checked && state.player.title) {
+            lastManualSeekTime = Date.now()
+            clearTimeout(window._seekDebounce)
+            window._seekDebounce = setTimeout(() => {
+              if (Date.now() - lastManualSeekTime < 150) {
+                videoSync(true)
+              }
+            }, 100)
+          }
+        })
+
+        video.addEventListener("timeupdate", () => {
+          if (currentMediaType === "script" && state.player.title) {
+            updatePlayerDisplay()
+          }
+
+          if (
+            syncScriptCheck.checked &&
+            state.player.playing &&
+            !video.paused &&
+            !video.ended
+          ) {
+            const drift = Math.abs(video.currentTime - state.player.position)
+            if (drift > 1.0) {
+              clearTimeout(window._driftDebounce)
+              window._driftDebounce = setTimeout(() => videoSync(), 300)
+            }
+          }
+        })
+
+        function updatePlayerDisplay() {
+          const p = state.player
+          if (!p.title) return
+
+          const isSynced =
+            syncScriptCheck.checked && currentMediaType === "script"
+          const isActivity = isActivityTitle(p.title)
+
+          const displayPosition = isSynced
+            ? video.currentTime
+            : isActivity
+              ? 0
+              : p.position || 0
+          const duration = p.duration || 0
+
+          if (timeDisplay) {
+            timeDisplay.textContent = `${formatTime(displayPosition)} / ${formatTime(duration)}`
+          }
+
+          if (progressBar && duration > 0) {
+            const serverPosition = isActivity ? 0 : p.position || 0
+            const percent = Math.min(
+              100,
+              Math.max(0, (serverPosition / duration) * 100),
+            )
+            progressBar.value = percent
+          }
+        }
+
+        video.addEventListener("canplaythrough", () => {
+          if (syncScriptCheck.checked == true) {
+            videoSync()
+          }
+        })
+
+        video.addEventListener("play", () => {
+          if (
+            syncScriptCheck.checked &&
+            state.player.title &&
+            !state.player.playing
+          ) {
+            client
+              .seek(video.currentTime)
+              .then(() => client.startPlayer())
+              .catch((err) => console.error("Play sync error:", err))
+          }
+        })
+
+        video.addEventListener("ended", () => {
+          if (syncScriptCheck.checked == true) {
+            handleApiCall(client.stopPlayer())
+          }
+        })
+
+        playStopBtn.addEventListener("click", async () => {
+          if (!isConnected) {
+            showError("Not connected to server")
+            return
+          }
+
+          if (state.player.playing) {
+            handleApiCall(client.stopPlayer())
+          } else {
+            if (syncScriptCheck.checked) {
+              try {
+                await client.seek(video.currentTime)
+                await client.startPlayer()
+                if (video.paused) video.play().catch(() => {})
+              } catch (err) {
+                console.error("Play sync error:", err)
+                handleApiCall(client.startPlayer())
+              }
+            } else {
+              handleApiCall(client.startPlayer())
+            }
+          }
+        })
+
+        progressBar.disabled = true
+        playStopBtn.disabled = true
+        resyncBtn.disabled = true
+        activitySelect.disabled = true
+        loadActivityBtn.disabled = true
+
+        // Progress Bar seek
+        progressBar.addEventListener("input", async () => {
+          const duration = state.player.duration || 0
+          if (duration <= 0) return
+
+          const seekPosition = (progressBar.value / 100) * duration
+
+          try {
+            const response = await client.seek(seekPosition)
+            state = response
+            updateUI()
+          } catch (err) {
+            console.error("Seek error:", err)
+          }
+        })
+
+        // Activity Loading
+        activitySelect.addEventListener("change", () => {
+          loadActivityBtn.disabled = !activitySelect.value
+        })
+
+        loadActivityBtn.addEventListener("click", async () => {
+          const name = activitySelect.value
+          if (!name) return
+
+          loadActivityBtn.disabled = true
+          loadScriptBtn.disabled = true
+          currentMediaType = "activity"
+
+          activeQueue = []
+          activeQueueIndex = -1
+          renderQueue()
+
+          try {
+            const response = await client.loadActivity(name)
+            state = response
+            updateUI()
+          } catch (err) {
+            console.error("Load activity error:", err)
+            alert(`Failed to load activity: ${err.message}`)
+          } finally {
+            loadActivityBtn.disabled = !activitySelect.value
+            loadScriptBtn.disabled = false
+            progressBar.disabled = true
+          }
+        })
+
+        // Script file Loading
+        loadScriptBtn.addEventListener("click", () => {
+          scriptInput.value = ""
+          scriptInput.click()
+        })
+
+        scriptInput.addEventListener("change", (e) => {
+          const files = Array.from(e.target.files || [])
+          if (!files.length) return
+
+          const vids = files.filter((f) => f.type.startsWith("video/"))
+          const scripts = files.filter((f) => {
+            const n = f.name.toLowerCase()
+            return n.endsWith(".funscript") || n.endsWith(".hwl")
+          })
+
+          if (vids.length > 0) loadVideo(URL.createObjectURL(vids[0]))
+          if (scripts.length > 0) {
+            scriptBuffer = scripts[0]
+            if (isConnected) {
+              sendScript(scriptBuffer)
+            } else {
+              updateUI()
+            }
+          }
+
+          e.target.value = ""
+          activeQueue = []
+          activeQueueIndex = -1
+          renderQueue()
+        })
+
+        async function sendScript(file) {
+          let ext = file.name.substring(file.name.lastIndexOf(".") + 1)
+
+          if (ext == "hwl") {
+            try {
+              const buffer = await readFileAsArrayBuffer(file)
+              const base64 = arrayBufferToBase64(buffer)
+              const response = await client.loadHwl(file.name, base64)
+              state = response
+              updateUI()
+              currentMediaType = "script"
+              progressBar.disabled = false
+            } catch (err) {
+              console.error("HWL load error:", err)
+              alert(`Failed to load HWL: ${err.message}`)
+            } finally {
+              scriptBuffer = {}
+              if (syncScriptCheck.checked == true) {
+                videoSync()
+              }
+              updateResyncBtnState()
+            }
+          } else if (ext == "funscript") {
+            try {
+              const text = await readFileAsText(file)
+              const response = await client.loadFunscript(file.name, text)
+              state = response
+              updateUI()
+              currentMediaType = "script"
+              progressBar.disabled = false
+            } catch (err) {
+              console.error("Funscript load error:", err)
+              alert(`Failed to load funscript: ${err.message}`)
+            } finally {
+              scriptBuffer = {}
+              if (syncScriptCheck.checked == true) {
+                videoSync()
+              }
+            }
+          }
+        }
+
+        // --- URL Modal Logic ---
+        const urlModal = document.getElementById("url-modal")
+        const urlInput = document.getElementById("url-input")
+
+        document
+          .getElementById("load-url-btn")
+          .addEventListener("click", () => {
+            urlModal.classList.add("open")
+            urlInput.value = ""
+            urlInput.focus()
+          })
+
+        document
+          .getElementById("close-url-modal")
+          .addEventListener("click", () => urlModal.classList.remove("open"))
+        urlModal.addEventListener("click", (e) => {
+          if (e.target === urlModal) urlModal.classList.remove("open")
+        })
+        urlInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter")
+            document.getElementById("load-url-action").click()
+        })
+
+        document
+          .getElementById("load-url-action")
+          .addEventListener("click", async () => {
+            const url = urlInput.value.trim()
+            if (!url) return
+            try {
+              const resp = await fetch(url)
+              const blob = await resp.blob()
+              const fileName =
+                url.split("/").pop().split("?")[0] || "remote_file"
+              const file = new File([blob], fileName, {
+                type: blob.type || "application/octet-stream",
+              })
+
+              if (fileName.match(/\.(mp4|webm|ogg|mov|mkv)$/i)) {
+                loadVideo(URL.createObjectURL(file))
+              } else {
+                await sendScript(file)
+                if (!isConnected) updateUI()
+              }
+            } catch (err) {
+              if (url.match(/\.(mp4|webm|ogg|mov|mkv)/i)) {
+                loadVideo(url)
+              } else {
+                alert("Failed to load. Check URL or CORS restrictions.")
+              }
+            }
+            urlModal.classList.remove("open")
+
+            activeQueue = []
+            activeQueueIndex = -1
+            renderQueue()
+          })
+
+        // --- Utility Functions ---
+
+        function formatTime(seconds) {
+          if (seconds == null || isNaN(seconds)) return "0:00"
+          const s = Math.max(0, Math.floor(seconds))
+          const m = Math.floor(s / 60)
+          const sec = s % 60
+          return `${m}:${sec.toString().padStart(2, "0")}`
+        }
+
+        function readFileAsArrayBuffer(file) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = () => reject(new Error("Failed to read file"))
+            reader.readAsArrayBuffer(file)
+          })
+        }
+
+        function readFileAsText(file) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = () => reject(new Error("Failed to read file"))
+            reader.readAsText(file)
+          })
+        }
+
+        function arrayBufferToBase64(buffer) {
+          const bytes = new Uint8Array(buffer)
+          let binary = ""
+          const chunkSize = 0x8000
+          for (let i = 0; i < bytes.byteLength; i += chunkSize) {
+            const chunk = bytes.subarray(i, i + chunkSize)
+            binary += String.fromCharCode.apply(null, chunk)
+          }
+          return btoa(binary)
+        }
+
+        function debounce(func, wait) {
+          let timeout
+          return function executedFunction(...args) {
+            const later = () => {
+              clearTimeout(timeout)
+              func(...args)
+            }
+            clearTimeout(timeout)
+            timeout = setTimeout(later, wait)
+          }
+        }
+
+        // --- UI Update Functions ---
+
+        function updateUI() {
+          const opts = state.options
+          powerADisplay.innerText = opts.power_a + " / " + opts.power_a_limit
+          powerBDisplay.innerText = opts.power_b + " / " + opts.power_b_limit
+
+          btnMute.classList.toggle("primary", opts.mute)
+          btnSwap.classList.toggle("primary", opts.swap_channels)
+          btnAuto.classList.toggle("primary", opts.auto_increase_power)
+
+          updateResyncBtnState()
+
+          updatePlayerUI()
+        }
+
+        function isActivityTitle(title) {
+          return title && /^Activity\s*\(/.test(title)
+        }
+
+        function updatePlayerUI() {
+          const p = state.player
+
+          const isPlaying = !!p.playing
+          progressBar.classList.toggle("primary", isPlaying)
+          stateBadge.classList.toggle("primary", isPlaying)
+          stateBadge.textContent = isPlaying ? "Playing" : "Stopped"
+
+          playStopBtn.textContent = isPlaying ? "⏹" : "▶"
+          playStopBtn.setAttribute("aria-label", isPlaying ? "Stop" : "Play")
+          playStopBtn.classList.toggle("stop", isPlaying)
+          if (syncScriptCheck.checked) {
+            playStopBtn.title = "Playback controlled by video"
+          } else {
+            playStopBtn.title = isConnected
+              ? "Play/Pause script"
+              : "Connect to enable playback"
+          }
+
+          if (p.title) {
+            fileStatus.textContent = p.title
+            fileStatus.classList.remove("empty")
+          } else if (
+            scriptBuffer &&
+            typeof scriptBuffer === "object" &&
+            scriptBuffer.name
+          ) {
+            fileStatus.textContent = `${scriptBuffer.name} [buffered]`
+            fileStatus.classList.remove("empty")
+          } else {
+            fileStatus.textContent = "No script/activity loaded"
+            fileStatus.classList.add("empty")
+          }
+
+          updatePlayerDisplay()
+        }
+
+        function showError(msg) {
+          errorDiv.innerText = msg
+          errorDiv.style.display = "block"
+        }
+
+        function clearError() {
+          errorDiv.innerText = ""
+          errorDiv.style.display = "none"
+        }
+
+        function populateActivityDropdown(activities) {
+          activitySelect.innerHTML = ""
+
+          if (activities.length === 0) {
+            const opt = document.createElement("option")
+            opt.value = ""
+            opt.textContent = "No activities available"
+            activitySelect.appendChild(opt)
+            activitySelect.disabled = true
+            loadActivityBtn.disabled = true
+            return
+          }
+
+          const defaultOpt = document.createElement("option")
+          defaultOpt.value = ""
+          defaultOpt.textContent = "Select activity..."
+          activitySelect.appendChild(defaultOpt)
+
+          for (const activity of activities) {
+            const opt = document.createElement("option")
+            opt.value = activity.name
+            opt.textContent = activity.display_name
+            activitySelect.appendChild(opt)
+          }
+
+          activitySelect.disabled = false
+          loadActivityBtn.disabled = true
+        }
+
+        // --- Polling ---
+
+        function startPolling() {
+          stopPolling()
+
+          const poll = async () => {
+            try {
+              const response = await client.getStatus()
+              const timeSinceSeek = Date.now() - lastManualSeekTime
+              if (
+                timeSinceSeek < 200 &&
+                response.player?.position !== undefined
+              ) {
+                state.options = { ...state.options, ...response.options }
+                state.player.playing = response.player.playing
+                state.player.title = response.player.title
+                state.player.duration = response.player.duration
+              } else {
+                state = response
+              }
+
+              if (connectionState.status === "lost") {
+                connectionState.status = "connected"
+                updateConnectionUI("Connected", "var(--success)")
+              }
+              connectionState.lastSuccessfulPoll = Date.now()
+              connectionState.reconnectAttempts = 0
+              connectionState.reconnectDelay = 1000
+
+              updateUI()
+
+              if (
+                activeQueue.length > 0 &&
+                activeQueueIndex >= 0 &&
+                isScriptComplete()
+              ) {
+                const now = Date.now()
+                if (
+                  !window._lastQueueAdvance ||
+                  now - window._lastQueueAdvance > 2000
+                ) {
+                  window._lastQueueAdvance = now
+                  advanceQueue()
+                }
+              }
+            } catch (err) {
+              console.error("Poll error:", err.message)
+
+              if (err.isNetworkError) {
+                handleDisconnect()
+              }
+            }
+
+            if (connectionState.status === "connected") {
+              pollInterval = setTimeout(poll, 1000)
+            }
+          }
+
+          poll()
+        }
+
+        function stopPolling() {
+          if (pollInterval !== null) {
+            clearTimeout(pollInterval)
+            pollInterval = null
+          }
+        }
+
+        function handleDisconnect() {
+          if (connectionState.status === "lost") return
+
+          connectionState.status = "lost"
+          updateConnectionUI("Connection lost", "var(--danger)")
+
+          controlsDisable(true)
+
+          attemptReconnect()
+        }
+
+        function attemptReconnect() {
+          if (
+            connectionState.reconnectAttempts >=
+            connectionState.maxReconnectAttempts
+          ) {
+            updateConnectionUI("Reconnect failed", "var(--danger)")
+            connectionState.isReconnecting = false
+            return
+          }
+
+          connectionState.isReconnecting = true
+          connectionState.reconnectAttempts++
+
+          const delay = Math.min(
+            connectionState.reconnectDelay *
+              Math.pow(1.5, connectionState.reconnectAttempts - 1),
+            30000,
+          )
+
+          setTimeout(async () => {
+            try {
+              await client.getStatus()
+              connectionState.status = "connected"
+              updateConnectionUI(
+                `Connected to ${inputIp.value.trim()}`,
+                "var(--success)",
+              )
+              controlsDisable(false)
+              startPolling()
+            } catch (err) {
+              if (err.isNetworkError) {
+                attemptReconnect()
+              } else {
+                updateConnectionUI("Server error", "var(--danger)")
+                connectionState.isReconnecting = false
+              }
+            }
+          }, delay)
+        }
+
+        function updateConnectionUI(text, color) {
+          connStatus.textContent = text
+          connStatus.style.color = color
+        }
+
+        function controlsDisable(t) {
+          ;[btnAP, btnAM, btnBP, btnBM, btnMute, btnSwap, btnAuto].forEach(
+            (btn) => {
+              btn.disabled = t
+            },
+          )
+
+          progressBar.disabled = t
+          if (syncScriptCheck.checked) {
+            playStopBtn.disabled = true
+          } else {
+            playStopBtn.disabled = t || !isConnected
+          }
+
+          activitySelect.disabled = t
+          loadActivityBtn.disabled = t
+
+          updateResyncBtnState()
+        }
+      })
+    </script>
+  </body>
+</html>
