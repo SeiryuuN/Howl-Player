@@ -1,2 +1,5 @@
 # Howl-Player
-HTML video player for Howl app
+HTML video player for Howl app:
+https://github.com/Amethyst-Sysadmin/Howl
+
+It allows you to control Howl app, load .hwl or .funscript files directly from PC and sync them to video. You can also queue video+script pairs or separate files.
