@@ -494,6 +494,76 @@
         background: var(--accent-hover);
       }
 
+      /* ===== DELAY SLIDERS ===== */
+      .delay-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        outline: none;
+        cursor: pointer;
+        border: none;
+        padding: 0;
+        margin: 0;
+        background: #1a1a1a;
+        box-shadow: inset 0 0 0 1px var(--border);
+      }
+
+      .delay-slider:focus,
+      .delay-slider:focus-visible {
+        outline: none;
+        box-shadow: inset 0 0 0 1px var(--border);
+      }
+
+      .delay-slider:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(100%);
+      }
+
+      .delay-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        margin-top: -4px;
+      }
+
+      .delay-slider:disabled::-webkit-slider-thumb {
+        cursor: not-allowed;
+      }
+
+      .delay-slider::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      .delay-slider:disabled::-moz-range-thumb {
+        cursor: not-allowed;
+      }
+
+      .delay-slider::-webkit-slider-runnable-track {
+        height: 6px;
+        border-radius: 3px;
+      }
+
+      .delay-slider::-moz-range-track {
+        height: 6px;
+        border-radius: 3px;
+        background: transparent;
+      }
+
       /* ===== ERROR MESSAGES ===== */
       .error-msg {
         color: var(--danger);
@@ -649,6 +719,14 @@
       .queue-row.active .queue-scriptname:not([title="No script"]) {
         color: var(--accent);
         font-weight: 500;
+      }
+      .queue-row.converting {
+        border-color: #ff9800;
+        background: rgba(255, 152, 0, 0.08);
+      }
+      .queue-row.error {
+        border-color: var(--danger);
+        background: rgba(217, 83, 79, 0.08);
       }
 
       /* Queue sort, play, load */
@@ -896,6 +974,45 @@
         width: 340px;
         box-shadow: var(--shadow-video);
       }
+
+      #conversion-popup {
+        z-index: 300;
+      }
+      .ui-blocked {
+        pointer-events: none !important;
+        opacity: 0.5 !important;
+        filter: grayscale(40%) !important;
+      }
+
+      /* ===== TOAST NOTIFICATIONS ===== */
+      .toast {
+        position: fixed;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: var(--danger);
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 500;
+        font-size: 13px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        transition:
+          transform 0.3s ease,
+          opacity 0.3s ease;
+        opacity: 0;
+        pointer-events: none;
+        max-width: 80%;
+        text-align: center;
+        white-space: pre-wrap;
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+      .toast.success {
+        background: var(--success);
+      }
     </style>
   </head>
   <body>
@@ -926,7 +1043,7 @@
         id="queue-file-input"
         class="queue-fileinput"
         style="display: none"
-        accept="video/*, .hwl, .funscript"
+        accept="video/*, .hwl, .funscript, .mp3"
         multiple
       />
     </div>
@@ -965,25 +1082,104 @@
               </button>
             </div>
           </div>
-          <div class="col">
+          <div class="col" style="min-width: 0">
             <label>Options</label>
             <div
               class="panel-box"
-              style="
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                gap: 8px;
-                margin-top: 4px;
-              "
+              style="display: flex; flex-direction: column"
             >
-              <button id="btn-mute" onclick="toggleMute(this)">Mute</button>
-              <button id="btn-swap" onclick="toggleSwap(this)">
-                Swap Channels
-              </button>
-              <button id="btn-auto" onclick="toggleAutoIncrease(this)">
-                Auto Increase
-              </button>
+              <div
+                style="
+                  display: flex;
+                  flex-direction: row;
+                  align-items: center;
+                  gap: 8px;
+                  flex-wrap: wrap;
+                "
+              >
+                <button id="btn-mute" onclick="toggleMute(this)">Mute</button>
+                <button id="btn-swap" onclick="toggleSwap(this)">
+                  Swap Channels
+                </button>
+                <button id="btn-auto" onclick="toggleAutoIncrease(this)">
+                  Auto Increase
+                </button>
+              </div>
+
+              <!-- Delay Sliders -->
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  width: 100%;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    width: 100%;
+                  "
+                >
+                  <label
+                    style="
+                      min-width: 80px;
+                      font-size: 11px;
+                      color: var(--text-dim);
+                      white-space: nowrap;
+                    "
+                  >
+                    Ch A Delay:
+                    <span id="delay-a-val" style="color: var(--text-main)"
+                      >0.00</span
+                    >s
+                  </label>
+                  <input
+                    type="range"
+                    id="slider-delay-a"
+                    class="delay-slider"
+                    min="-3"
+                    max="3"
+                    step="0.05"
+                    value="0"
+                    style="flex: 1; min-width: 0"
+                  />
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    width: 100%;
+                  "
+                >
+                  <label
+                    style="
+                      min-width: 80px;
+                      font-size: 11px;
+                      color: var(--text-dim);
+                      white-space: nowrap;
+                    "
+                  >
+                    Ch B Delay:
+                    <span id="delay-b-val" style="color: var(--text-main)"
+                      >0.00</span
+                    >s
+                  </label>
+                  <input
+                    type="range"
+                    id="slider-delay-b"
+                    class="delay-slider"
+                    min="-3"
+                    max="3"
+                    step="0.05"
+                    value="0"
+                    style="flex: 1; min-width: 0"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1112,7 +1308,12 @@
             />
             <label
               for="syncScriptCheck"
-              style="font-size: 12px; cursor: pointer; flex: 1"
+              style="
+                font-size: 12px;
+                cursor: pointer;
+                flex-shrink: 0;
+                white-space: nowrap;
+              "
               >Sync video with script</label
             >
             <button
@@ -1121,9 +1322,15 @@
             >
               Manual sync
             </button>
+
             <button
               id="load-url-btn"
-              style="padding: 4px 10px; font-size: 12px; flex-shrink: 0"
+              style="
+                padding: 4px 10px;
+                font-size: 12px;
+                flex-shrink: 0;
+                margin-left: auto;
+              "
             >
               Load URL
             </button>
@@ -1137,7 +1344,7 @@
               type="file"
               id="script-file-input"
               style="display: none"
-              accept="video/*, .hwl, .funscript"
+              accept="video/*, .hwl, .funscript, .mp3"
               multiple
             />
           </div>
@@ -1266,6 +1473,25 @@
         </button>
       </div>
     </div>
+
+    <div id="conversion-popup" class="modal-overlay">
+      <div
+        class="modal-content"
+        style="text-align: center; width: 320px; padding: 20px"
+      >
+        <div
+          style="font-size: 14px; margin-bottom: 8px; font-weight: 500"
+          id="popup-title"
+        >
+          Converting MP3 to HWL...
+        </div>
+        <div style="font-size: 12px; color: var(--text-dim); line-height: 1.5">
+          Audio is being processed
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
@@ -1442,6 +1668,8 @@
         let availableActivities = []
         let pollInterval = null
         let scriptBuffer = {}
+        let originalScriptBuffer = null
+        let currentScriptType = null
 
         // Save
         let saveState = {}
@@ -1458,6 +1686,8 @@
             volume: 1.0,
             muted: false,
             queueHidden: false,
+            delayA: 0,
+            delayB: 0,
           }
         }
 
@@ -1468,6 +1698,40 @@
         const toggleBtn = document.getElementById("toggle-bar")
         const tabsArea = document.getElementById("tabs-area")
         const connStatus = document.querySelector(".conn-status")
+        const sliderA = document.getElementById("slider-delay-a")
+        const sliderB = document.getElementById("slider-delay-b")
+        const delayAVal = document.getElementById("delay-a-val")
+        const delayBVal = document.getElementById("delay-b-val")
+        let delayDebounce = null
+
+        let delayA = saveState.delayA || 0
+        let delayB = saveState.delayB || 0
+        sliderA.value = delayA
+        sliderB.value = delayB
+        delayAVal.textContent = delayA.toFixed(2)
+        delayBVal.textContent = delayB.toFixed(2)
+        updateSliderFill(sliderA)
+        updateSliderFill(sliderB)
+
+        sliderA.addEventListener("input", (e) => {
+          delayA = parseFloat(e.target.value)
+          delayAVal.textContent = delayA.toFixed(2)
+          saveState.delayA = delayA
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+          updateSliderFill(sliderA)
+          clearTimeout(delayDebounce)
+          delayDebounce = setTimeout(applyDelayAndResend, 300)
+        })
+
+        sliderB.addEventListener("input", (e) => {
+          delayB = parseFloat(e.target.value)
+          delayBVal.textContent = delayB.toFixed(2)
+          saveState.delayB = delayB
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+          updateSliderFill(sliderB)
+          clearTimeout(delayDebounce)
+          delayDebounce = setTimeout(applyDelayAndResend, 300)
+        })
 
         let isHidden = saveState.barToggle
         let isTempShow = false
@@ -1600,6 +1864,257 @@
           updateBottomConnectBtn()
         })
 
+        //audio converter
+        const conversionPopup = document.getElementById("conversion-popup")
+        const popupTitle = document.getElementById("popup-title")
+
+        function showConversionPopup(title = "Converting audio...") {
+          popupTitle.textContent = title
+          conversionPopup.classList.add("open")
+          document
+            .querySelectorAll(
+              "button, input, select, .video-area, .queue-panel, canvas, .bottom-bar",
+            )
+            .forEach((el) => el.classList.add("ui-blocked"))
+        }
+
+        function hideConversionPopup() {
+          conversionPopup.classList.remove("open")
+          document
+            .querySelectorAll(
+              "button, input, select, .video-area, .queue-panel, canvas, .bottom-bar",
+            )
+            .forEach((el) => el.classList.remove("ui-blocked"))
+        }
+
+        function getAudioDataOffset(buffer) {
+          const view = new DataView(buffer)
+
+          if (
+            buffer.byteLength > 10 &&
+            view.getUint8(0) === 0x49 &&
+            view.getUint8(1) === 0x44 &&
+            view.getUint8(2) === 0x33
+          ) {
+            const size =
+              ((view.getUint8(6) & 0x7f) << 21) |
+              ((view.getUint8(7) & 0x7f) << 14) |
+              ((view.getUint8(8) & 0x7f) << 7) |
+              (view.getUint8(9) & 0x7f)
+            return 10 + size
+          }
+
+          const maxScan = Math.min(buffer.byteLength - 1, 1024 * 1024)
+          for (let i = 0; i < maxScan; i++) {
+            if (
+              view.getUint8(i) === 0xff &&
+              (view.getUint8(i + 1) & 0xe0) === 0xe0
+            ) {
+              return i
+            }
+          }
+
+          return 0
+        }
+
+        async function convertAudioToHWL(audioFile) {
+          const MAX_SAFE_SIZE = 300 * 1024 * 1024
+          if (audioFile.size > MAX_SAFE_SIZE) {
+            throw new Error(
+              `File is too large (${(audioFile.size / 1024 / 1024).toFixed(1)}MB). Browsers cannot decompress files this large into RAM. Please use a shorter file or lower bitrate.`,
+            )
+          }
+
+          if (audioFile.size === 0) {
+            throw new Error("File is empty (0 bytes).")
+          }
+
+          const audioContext = new (
+            window.AudioContext || window.webkitAudioContext
+          )()
+
+          let arrayBuffer
+          try {
+            arrayBuffer = await new Promise((resolve, reject) => {
+              const reader = new FileReader()
+              reader.onload = () => resolve(reader.result)
+              reader.onerror = () =>
+                reject(new Error("Failed to read file from disk."))
+              reader.readAsArrayBuffer(audioFile)
+            })
+          } catch (e) {
+            audioContext.close()
+            throw e
+          }
+
+          let audioBuffer
+          try {
+            if (audioContext.state === "suspended") await audioContext.resume()
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+          } catch (e) {
+            console.warn(
+              "Initial decode failed, attempting smart extraction...",
+              e,
+            )
+            try {
+              const offset = getAudioDataOffset(arrayBuffer)
+
+              if (offset === 0 && arrayBuffer.byteLength > 1024) {
+                throw new Error("No valid MP3 frames found.")
+              }
+
+              const cleanBuffer = arrayBuffer.slice(offset)
+              audioBuffer = await audioContext.decodeAudioData(cleanBuffer)
+            } catch (e2) {
+              audioContext.close()
+              throw new Error(
+                `Unable to decode. The file may be corrupted, or it's unsupported and can't be played in browser`,
+              )
+            }
+          }
+
+          if (!audioBuffer || audioBuffer.duration <= 0.1) {
+            audioContext.close()
+            throw new Error(
+              "Audio file is empty, silent, or has zero duration.",
+            )
+          }
+
+          const STEP_MS = 25
+          const samplesPerPulse = Math.floor(
+            (audioBuffer.sampleRate * STEP_MS) / 1000,
+          )
+          const totalPulses = Math.floor(
+            audioBuffer.duration * (1000 / STEP_MS),
+          )
+          const leftCh = audioBuffer.getChannelData(0)
+          const rightCh =
+            audioBuffer.numberOfChannels > 1
+              ? audioBuffer.getChannelData(1)
+              : leftCh
+
+          const rawAmpsA = [],
+            rawAmpsB = [],
+            rawFreqsA = [],
+            rawFreqsB = []
+
+          const NOISE_THRESHOLD = 0.02
+
+          const cutoffFreq = 150
+          const RC = 1.0 / (2.0 * Math.PI * cutoffFreq)
+          const dt = 1.0 / audioBuffer.sampleRate
+          const alpha = dt / (RC + dt)
+
+          let lastFilteredL = 0,
+            lastFilteredR = 0
+
+          for (let p = 0; p < totalPulses; p++) {
+            const s = p * samplesPerPulse
+            const e = Math.min(s + samplesPerPulse, leftCh.length)
+            if (e - s < 10) break
+
+            let sumSqA = 0,
+              sumSqB = 0
+            let crossA = 0,
+              crossB = 0
+
+            let prevFilteredL = lastFilteredL
+            let prevFilteredR = lastFilteredR
+
+            for (let i = s; i < e; i++) {
+              const rawL = leftCh[i]
+              const rawR = rightCh[i]
+
+              sumSqA += rawL * rawL
+              sumSqB += rawR * rawR
+
+              const filteredL = lastFilteredL + alpha * (rawL - lastFilteredL)
+              const filteredR = lastFilteredR + alpha * (rawR - lastFilteredR)
+              lastFilteredL = filteredL
+              lastFilteredR = filteredR
+
+              if (
+                (prevFilteredL <= 0 && filteredL > 0) ||
+                (prevFilteredL >= 0 && filteredL < 0)
+              )
+                crossA++
+              if (
+                (prevFilteredR <= 0 && filteredR > 0) ||
+                (prevFilteredR >= 0 && filteredR < 0)
+              )
+                crossB++
+
+              prevFilteredL = filteredL
+              prevFilteredR = filteredR
+            }
+
+            const ampA = Math.sqrt(sumSqA / (e - s))
+            const ampB = Math.sqrt(sumSqB / (e - s))
+
+            const timeSec = (e - s) / audioBuffer.sampleRate
+
+            let freqA = 0,
+              freqB = 0
+            if (ampA > NOISE_THRESHOLD) freqA = crossA / timeSec / 2
+            if (ampB > NOISE_THRESHOLD) freqB = crossB / timeSec / 2
+
+            rawAmpsA.push(ampA)
+            rawAmpsB.push(ampB)
+            rawFreqsA.push(freqA)
+            rawFreqsB.push(freqB)
+
+            if (p % 500 === 0) await new Promise((r) => setTimeout(r, 0))
+          }
+
+          audioContext.close()
+
+          const p99 = (arr) => {
+            if (arr.length === 0) return 0.001
+            const sorted = [...arr].sort((a, b) => a - b)
+            return sorted[Math.floor(arr.length * 0.99)] || 0.001
+          }
+
+          const maxAmpA = p99(rawAmpsA)
+          const maxAmpB = p99(rawAmpsB)
+
+          const freqFloor = 20
+          const rawFreqsANormalized = rawFreqsA.map((f) =>
+            Math.max(0, f - freqFloor),
+          )
+          const rawFreqsBNormalized = rawFreqsB.map((f) =>
+            Math.max(0, f - freqFloor),
+          )
+
+          const maxFreqA = Math.max(p99(rawFreqsANormalized), 10)
+          const maxFreqB = Math.max(p99(rawFreqsBNormalized), 10)
+
+          const clamp = (v, mn, mx) => Math.max(mn, Math.min(mx, v))
+
+          const header = new TextEncoder().encode("YEAHBOI!")
+          const buf = new ArrayBuffer(8 + rawAmpsA.length * 16)
+          const view = new DataView(buf)
+          for (let i = 0; i < 8; i++) view.setUint8(i, header[i])
+
+          for (let i = 0; i < rawAmpsA.length; i++) {
+            const o = 8 + i * 16
+            view.setFloat32(o, clamp(rawAmpsA[i] / maxAmpA, 0, 1), true)
+            view.setFloat32(o + 4, clamp(rawAmpsB[i] / maxAmpB, 0, 1), true)
+            view.setFloat32(
+              o + 8,
+              clamp(rawFreqsANormalized[i] / maxFreqA, 0, 1),
+              true,
+            )
+            view.setFloat32(
+              o + 12,
+              clamp(rawFreqsBNormalized[i] / maxFreqB, 0, 1),
+              true,
+            )
+            if (i % 500 === 0) await new Promise((r) => setTimeout(r, 0))
+          }
+
+          return { buffer: buf }
+        }
+
         // Video queue
         class VideoQueueItem {
           constructor(videoName = "No video", scriptName = "No script") {
@@ -1607,29 +2122,75 @@
             this.scriptFile = null
             this.videoName = videoName
             this.scriptName = scriptName
+
+            this.converting = false
+            this.converted = false
+            this.conversionError = null
+            this.conversionPromise = null
+            this._hwlBuffer = null
+            this._convId = null
           }
+
           render(index, isLastItem) {
             const row = document.createElement("div")
             row.className = "queue-row"
             row.dataset.index = index
-            const deleteDisabled = isLastItem
-              ? 'disabled title="Keep at least one item"'
-              : ""
-            const downDisabled = index === vidQueue.length - 1 ? "disabled" : ""
-            const upDisabled = index === 0 ? "disabled" : ""
-            row.innerHTML = `<div class="queue-left-group"><div class="queue-nav">
-              <button class="queue-upbtn" ${upDisabled} title="Move up">▲</button>
-              <button class="queue-downbtn" ${downDisabled} title="Move down">▼</button></div>
-              <div class="queue-actions">
-                <button class="queue-playbtn" title="Play from here">▶</button>
-                <button class="queue-loadbtn" title="Load files">Load</button></div>
-              <input type="file" class="queue-fileinput" accept="video/*, .hwl, .funscript" multiple /></div>
+
+            const isConverting = this.converting
+            const hasError = !!this.conversionError
+            const hasVideo = !!this.videoFile
+            const isUnplayable = hasError && !hasVideo
+
+            const loadDisabled = isConverting ? "disabled" : ""
+            const playDisabled = isConverting || isUnplayable ? "disabled" : ""
+
+            const downDisabled =
+              index === vidQueue.length - 1 || isConverting ? "disabled" : ""
+            const upDisabled = index === 0 || isConverting ? "disabled" : ""
+
+            let deleteDisabled = ""
+            let deleteTitle = "Remove"
+            if (isLastItem && !isConverting) {
+              deleteDisabled = "disabled"
+              deleteTitle = "Keep at least one item"
+            } else if (isConverting) {
+              deleteDisabled = "disabled"
+              deleteTitle = "Cannot delete while converting"
+            }
+
+            let scriptDisplay = this.escapeHtml(this.scriptName)
+
+            if (isConverting) {
+              scriptDisplay = `<span style="color: #ff9800; font-weight: 500;">Converting audio...</span>`
+              row.classList.add("converting")
+            } else if (hasError) {
+              scriptDisplay = `<span style="color: var(--danger); font-weight: 500;">Conversion failed</span>`
+              if (isUnplayable) {
+                row.classList.add("error")
+              }
+            }
+
+            row.innerHTML = `
+              <div class="queue-left-group">
+                <div class="queue-nav">
+                  <button class="queue-upbtn" ${upDisabled} title="Move up">▲</button>
+                  <button class="queue-downbtn" ${downDisabled} title="Move down">▼</button>
+                </div>
+                <div class="queue-actions">
+                  <button class="queue-playbtn" ${playDisabled} title="Play from here">▶</button>
+                  <button class="queue-loadbtn" ${loadDisabled} title="Load files">Load</button>
+                </div>
+                <input type="file" class="queue-fileinput" accept="video/*, .hwl, .funscript, .mp3" multiple ${loadDisabled} />
+              </div>
               <div class="queue-names">
                 <span class="queue-vidname" title="${this.escapeHtml(this.videoName)}">${this.escapeHtml(this.videoName)}</span>
-                <span class="queue-scriptname" title="${this.escapeHtml(this.scriptName)}">${this.escapeHtml(this.scriptName)}</span></div>
-              <button class="queue-deletebtn" ${deleteDisabled}>Del</button>`
+                <span class="queue-scriptname" title="${this.escapeHtml(this.scriptName)}">${scriptDisplay}</span>
+              </div>
+              <button class="queue-deletebtn" ${deleteDisabled} title="${deleteTitle}">Del</button>
+            `
             return row
           }
+
           escapeHtml(t) {
             const d = document.createElement("div")
             d.textContent = t
@@ -1650,40 +2211,57 @@
         let isMouseOnQueuePanel = false
         let isQueueTempShow = false
 
-        //renderQueue()
         applyQueuePanelState()
         setupQueueEvents()
+
+        async function startBackgroundConversion(item, file) {
+          item.converting = true
+          const convId = (item._convId = Date.now())
+
+          try {
+            const { buffer } = await convertAudioToHWL(file)
+            if (item._convId !== convId || !vidQueue.includes(item)) return
+
+            item._hwlBuffer = buffer
+            item.converting = false
+            item.converted = true
+            renderQueue()
+          } catch (err) {
+            if (item._convId !== convId || !vidQueue.includes(item)) return
+            item.conversionError = err.message
+            item.converting = false
+            renderQueue()
+          }
+        }
 
         function handleQueueFiles(files, targetIndex = vidQueue.length) {
           const fileArray = Array.from(files || [])
           if (!fileArray.length) return
 
           const vids = fileArray.filter((f) => f.type.startsWith("video/"))
-          const scripts = fileArray.filter((f) => {
-            const n = f.name.toLowerCase()
-            return n.endsWith(".funscript") || n.endsWith(".hwl")
-          })
+          const scripts = fileArray.filter((f) => isScriptFile(f.name))
           if (!vids.length && !scripts.length) return
 
-          if (
-            vidQueue.length === 0 &&
-            (vids.length > 0 || scripts.length > 0)
-          ) {
+          if (vidQueue.length === 0) {
             const firstVid = vids[0]
             const firstScript = scripts[0]
-
             const item = new VideoQueueItem(
               firstVid ? firstVid.name : "No video",
               firstScript ? firstScript.name : "No script",
             )
             if (firstVid) item.videoFile = firstVid
-            if (firstScript) item.scriptFile = firstScript
-
+            if (firstScript) {
+              item.scriptFile = firstScript
+              if (isAudioFile(firstScript.name)) {
+                item.conversionPromise = startBackgroundConversion(
+                  item,
+                  firstScript,
+                )
+              }
+            }
             vidQueue.push(item)
-
             if (firstVid) vids.shift()
             if (firstScript) scripts.shift()
-
             targetIndex = vidQueue.length
           }
 
@@ -1692,47 +2270,63 @@
               i === 0 && targetIndex < vidQueue.length
                 ? targetIndex
                 : vidQueue.length
-
             let item
+
             if (vidQueue[actualIndex]) {
               item = vidQueue[actualIndex]
-              const existingScript = item.scriptFile
-              const existingScriptName = item.scriptName
-
-              item.videoFile = null
-              item.videoName = "No video"
-
-              if (existingScript) {
-                item.scriptFile = existingScript
-                item.scriptName = existingScriptName
-              }
+              item.videoFile = v
+              item.videoName = v.name
+              item.conversionError = null
+              item._hwlBuffer = null
+              item.converted = false
             } else {
               item = new VideoQueueItem(v.name, "No script")
+              item.videoFile = v
+              vidQueue.push(item)
             }
 
             const vidBaseName = v.name.replace(/\.[^.]+$/, "")
-
             for (let j = 0; j < scripts.length; j++) {
               const scriptBaseName = scripts[j].name.replace(/\.[^.]+$/, "")
               if (vidBaseName === scriptBaseName) {
                 item.scriptFile = scripts[j]
                 item.scriptName = scripts[j].name
+                if (isAudioFile(scripts[j].name)) {
+                  item.conversionPromise = startBackgroundConversion(
+                    item,
+                    scripts[j],
+                  )
+                }
                 scripts.splice(j, 1)
                 break
               }
             }
-
-            item.videoFile = v
-            item.videoName = v.name
-
-            if (!vidQueue[actualIndex]) {
-              vidQueue.push(item)
-            }
           })
 
           scripts.forEach((s) => {
+            if (targetIndex < vidQueue.length) {
+              const targetItem = vidQueue[targetIndex]
+              targetItem.scriptFile = s
+              targetItem.scriptName = s.name
+              targetItem.conversionError = null
+              targetItem._hwlBuffer = null
+              targetItem.converted = false
+
+              if (isAudioFile(s.name)) {
+                targetItem.conversionPromise = startBackgroundConversion(
+                  targetItem,
+                  s,
+                )
+              }
+              targetIndex = vidQueue.length
+              return
+            }
+
             const item = new VideoQueueItem("No video", s.name)
             item.scriptFile = s
+            if (isAudioFile(s.name)) {
+              item.conversionPromise = startBackgroundConversion(item, s)
+            }
             vidQueue.push(item)
           })
 
@@ -1757,48 +2351,117 @@
           updateQueueNavButtons()
         }
 
-        function advanceQueue() {
+        async function advanceQueue() {
           if (
             activeQueue.length > 0 &&
             activeQueueIndex < activeQueue.length - 1
           ) {
             activeQueueIndex++
             const next = activeQueue[activeQueueIndex]
+            if (!next) return
 
-            if (next?.videoFile) loadVideo(URL.createObjectURL(next.videoFile))
+            if (next.converting) {
+              video.pause()
+              showConversionPopup("Preparing next item...")
+              try {
+                await next.conversionPromise
+              } catch (e) {}
+              hideConversionPopup()
+            }
 
-            if (next?.scriptFile) {
-              scriptBuffer = next.scriptFile
+            if (activeQueue[activeQueueIndex] !== next) return
+
+            if (next.conversionError && !next.videoFile) {
+              showError(
+                `Conversion failed for ${next.scriptName}: ${next.conversionError}`,
+              )
+              activeQueue.splice(activeQueueIndex, 1)
+              renderQueue()
+              return
+            }
+
+            if (next.videoFile) loadVideo(URL.createObjectURL(next.videoFile))
+
+            let hasPlayableScript = false
+
+            if (!next.conversionError) {
+              if (next._hwlBuffer) {
+                hasPlayableScript = true
+                if (isConnected) {
+                  const title = (next.scriptName || "script").replace(
+                    /\.[^.]+$/,
+                    "",
+                  )
+                  setOriginalScript(next._hwlBuffer, "hwl")
+
+                  await client.loadHwl(
+                    title,
+                    arrayBufferToBase64(getModifiedScriptData()),
+                  )
+                  state = await client.getStatus()
+                  updateUI()
+                  client.startPlayer().catch(() => {})
+                } else {
+                  const blob = new Blob([next._hwlBuffer], {
+                    type: "application/octet-stream",
+                  })
+                  const hwlFile = new File(
+                    [blob],
+                    next.scriptName || "script.mp3",
+                    { type: "application/octet-stream" },
+                  )
+                  hwlFile.isConvertedHwl = true
+                  scriptBuffer = hwlFile
+                  updateUI()
+                }
+              } else if (next.scriptFile) {
+                hasPlayableScript = true
+                scriptBuffer = next.scriptFile
+                if (isConnected) {
+                  let qExt = next.scriptFile.name.substring(
+                    next.scriptFile.name.lastIndexOf(".") + 1,
+                  )
+                  if (qExt === "hwl")
+                    setOriginalScript(
+                      await readFileAsArrayBuffer(next.scriptFile),
+                      "hwl",
+                    )
+                  else if (qExt === "funscript")
+                    setOriginalScript(
+                      await readFileAsText(next.scriptFile),
+                      "funscript",
+                    )
+
+                  sendScript(scriptBuffer)
+                } else {
+                  updateUI()
+                }
+              }
             } else {
               scriptBuffer = {}
+              updateUI()
             }
 
-            updateUI()
+            if (next.videoFile && video.paused) {
+              const playPromise = video.play()
+              if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                  const onCanPlay = () => {
+                    video.play().catch(() => {})
+                    video.removeEventListener("canplay", onCanPlay)
+                  }
+                  video.addEventListener("canplay", onCanPlay)
+                })
+              }
+            }
+
             renderQueue()
-
-            if (next?.scriptFile && isConnected) {
-              sendScript(scriptBuffer).then(() => {
-                client.startPlayer().catch(() => {})
-                if (next?.videoFile && video.paused) {
-                  video.play().catch(() => {})
-                }
-                setTimeout(updateUI, 150)
-              })
-            } else {
-              if (isConnected) {
-                client.startPlayer().catch(() => {})
-              }
-              if (next?.videoFile && video.paused) {
-                video.play().catch(() => {})
-              }
-              if (isConnected) {
-                setTimeout(updateUI, 150)
-              }
-            }
+            setTimeout(updateUI, 150)
           } else if (activeQueue.length > 0) {
             activeQueue = []
             activeQueueIndex = -1
             scriptBuffer = {}
+            clearOriginalScript()
             renderQueue()
           }
         }
@@ -1806,15 +2469,24 @@
         function updateQueueNavButtons() {
           if (!queueContainer) return
           queueContainer.querySelectorAll(".queue-row").forEach((row, idx) => {
+            const isConverting = row.classList.contains("converting")
+
             const upBtn = row.querySelector(".queue-upbtn"),
               downBtn = row.querySelector(".queue-downbtn"),
               deleteBtn = row.querySelector(".queue-deletebtn")
-            if (upBtn) upBtn.disabled = idx === 0
-            if (downBtn) downBtn.disabled = idx === vidQueue.length - 1
+
+            if (upBtn) upBtn.disabled = idx === 0 || isConverting
+            if (downBtn)
+              downBtn.disabled = idx === vidQueue.length - 1 || isConverting
+
             if (deleteBtn) {
               const last = vidQueue.length === 1
-              deleteBtn.disabled = last
-              deleteBtn.title = last ? "Keep at least one item" : "Remove"
+              deleteBtn.disabled = last || isConverting
+              if (isConverting) {
+                deleteBtn.title = "Cannot delete while converting"
+              } else {
+                deleteBtn.title = last ? "Keep at least one item" : "Remove"
+              }
             }
           })
         }
@@ -1962,48 +2634,109 @@
                 return
               }
               if (t.classList.contains("queue-playbtn")) {
-                activeQueue = vidQueue.slice(idx)
-                activeQueueIndex = 0
+                ;(async () => {
+                  activeQueue = vidQueue.slice(idx)
+                  activeQueueIndex = 0
+                  const next = activeQueue[0]
+                  if (!next) return
 
-                if (activeQueue[0]?.videoFile)
-                  loadVideo(URL.createObjectURL(activeQueue[0].videoFile))
+                  let hasPlayableScript = false
 
-                if (activeQueue[0]?.scriptFile) {
-                  scriptBuffer = activeQueue[0].scriptFile
-                } else {
-                  scriptBuffer = {}
-                }
+                  if (next.converting) {
+                    video.pause()
+                    showConversionPopup(
+                      `Preparing ${next.scriptName || "item"}...`,
+                    )
+                    try {
+                      await next.conversionPromise
+                    } catch (e) {}
+                    hideConversionPopup()
+                  }
 
-                updateUI()
-                renderQueue()
+                  if (activeQueue[0] !== next) return
 
-                if (activeQueue[0]?.scriptFile && isConnected) {
-                  sendScript(scriptBuffer)
-                    .then(() => {
-                      client.startPlayer().catch(() => {})
-                      if (activeQueue[0]?.videoFile && video.paused) {
-                        video.play().catch(() => {})
+                  if (next.conversionError && !next.videoFile) {
+                    showError(
+                      `Cannot play ${next.scriptName}: ${next.conversionError}`,
+                    )
+                    return
+                  }
+
+                  if (!next.conversionError) {
+                    if (next._hwlBuffer) {
+                      hasPlayableScript = true
+                      if (isConnected) {
+                        const title = (next.scriptName || "script").replace(
+                          /\.[^.]+$/,
+                          "",
+                        )
+                        setOriginalScript(next._hwlBuffer, "hwl")
+                        await client.loadHwl(
+                          title,
+                          arrayBufferToBase64(getModifiedScriptData()),
+                        )
+                        state = await client.getStatus()
+                        updateUI()
+                        client.startPlayer().catch(() => {})
+                      } else {
+                        const blob = new Blob([next._hwlBuffer], {
+                          type: "application/octet-stream",
+                        })
+                        const hwlFile = new File(
+                          [blob],
+                          next.scriptName || "script.mp3",
+                          { type: "application/octet-stream" },
+                        )
+                        hwlFile.isConvertedHwl = true
+                        scriptBuffer = hwlFile
+                        updateUI()
                       }
-                      setTimeout(updateUI, 150)
-                    })
-                    .catch((err) => {
-                      console.error("Failed to load script:", err)
-                      if (activeQueue[0]?.videoFile && video.paused) {
-                        video.play().catch(() => {})
+                    } else if (next.scriptFile) {
+                      hasPlayableScript = true
+                      scriptBuffer = next.scriptFile
+                      if (isConnected) {
+                        let qExt = next.scriptFile.name.substring(
+                          next.scriptFile.name.lastIndexOf(".") + 1,
+                        )
+                        if (qExt === "hwl")
+                          setOriginalScript(
+                            await readFileAsArrayBuffer(next.scriptFile),
+                            "hwl",
+                          )
+                        else if (qExt === "funscript")
+                          setOriginalScript(
+                            await readFileAsText(next.scriptFile),
+                            "funscript",
+                          )
+                        sendScript(scriptBuffer)
+                      } else {
+                        updateUI()
                       }
-                    })
-                } else {
-                  if (isConnected) {
-                    client.startPlayer().catch(() => {})
+                    }
+                  } else {
+                    scriptBuffer = {}
+                    updateUI()
                   }
-                  if (activeQueue[0]?.videoFile && video.paused) {
-                    video.play().catch(() => {})
-                  }
-                  if (isConnected) {
-                    setTimeout(updateUI, 150)
-                  }
-                }
 
+                  if (next.videoFile) {
+                    loadVideo(URL.createObjectURL(next.videoFile))
+                    if (video.paused) {
+                      const playPromise = video.play()
+                      if (playPromise !== undefined) {
+                        playPromise.catch(() => {
+                          const onCanPlay = () => {
+                            video.play().catch(() => {})
+                            video.removeEventListener("canplay", onCanPlay)
+                          }
+                          video.addEventListener("canplay", onCanPlay)
+                        })
+                      }
+                    }
+                  }
+
+                  renderQueue()
+                  setTimeout(updateUI, 150)
+                })()
                 return
               }
             })
@@ -2190,6 +2923,7 @@
             connectionState.reconnectAttempts = 0
             lastManualSeekTime = 0
             clearError()
+            clearOriginalScript()
 
             // Reset UI
             updateConnectionUI("Not connected", "")
@@ -2250,7 +2984,7 @@
               }
 
               isConnected = true
-              if (scriptBuffer == {}) {
+              if (scriptBuffer && scriptBuffer.name) {
                 sendScript(scriptBuffer)
               }
 
@@ -2379,6 +3113,20 @@
         const scriptInput = document.getElementById("script-file-input")
         const activitySelect = document.getElementById("activity-select")
         const loadActivityBtn = document.getElementById("loadActivityBtn")
+
+        const isAudioFile = (name) => {
+          const n = name.toLowerCase()
+          return n.endsWith(".mp3") /* ||
+            n.endsWith(".wav") ||
+            n.endsWith(".ogg") ||
+            n.endsWith(".flac") */
+        }
+        const isScriptFile = (name) => {
+          const n = name.toLowerCase()
+          return (
+            n.endsWith(".funscript") || n.endsWith(".hwl") || isAudioFile(n)
+          )
+        }
 
         syncScriptCheck.checked = saveState.syncScript
         syncScriptCheck.addEventListener("change", applySyncCheckboxState)
@@ -2636,6 +3384,7 @@
           loadActivityBtn.disabled = true
           loadScriptBtn.disabled = true
           currentMediaType = "activity"
+          clearOriginalScript()
 
           activeQueue = []
           activeQueueIndex = -1
@@ -2647,7 +3396,7 @@
             updateUI()
           } catch (err) {
             console.error("Load activity error:", err)
-            alert(`Failed to load activity: ${err.message}`)
+            showError(`Failed to load activity: ${err.message}`)
           } finally {
             loadActivityBtn.disabled = !activitySelect.value
             loadScriptBtn.disabled = false
@@ -2661,70 +3410,98 @@
           scriptInput.click()
         })
 
-        scriptInput.addEventListener("change", (e) => {
+        scriptInput.addEventListener("change", async (e) => {
           const files = Array.from(e.target.files || [])
           if (!files.length) return
 
           const vids = files.filter((f) => f.type.startsWith("video/"))
-          const scripts = files.filter((f) => {
-            const n = f.name.toLowerCase()
-            return n.endsWith(".funscript") || n.endsWith(".hwl")
-          })
+          const scripts = files.filter((f) => isScriptFile(f.name))
 
-          if (vids.length > 0) loadVideo(URL.createObjectURL(vids[0]))
+          if (vids.length) loadVideo(URL.createObjectURL(vids[0]))
+
           if (scripts.length > 0) {
-            scriptBuffer = scripts[0]
-            if (isConnected) {
-              sendScript(scriptBuffer)
+            const file = scripts[0]
+            if (isAudioFile(file.name)) {
+              video.pause()
+              showConversionPopup(`Converting ${file.name}...`)
+              try {
+                const { buffer } = await convertAudioToHWL(file)
+                setOriginalScript(buffer, "hwl")
+
+                const blob = new Blob([buffer], {
+                  type: "application/octet-stream",
+                })
+                const hwlFile = new File([blob], file.name, {
+                  type: "application/octet-stream",
+                })
+                hwlFile.isConvertedHwl = true
+
+                scriptBuffer = hwlFile
+
+                if (isConnected) {
+                  await sendScript(scriptBuffer)
+                } else {
+                  updateUI()
+                }
+
+                currentMediaType = "script"
+                progressBar.disabled = false
+              } catch (err) {
+                showError(`Failed to convert audio: ${err.message}`)
+              } finally {
+                hideConversionPopup()
+                updateResyncBtnState()
+              }
             } else {
-              updateUI()
+              scriptBuffer = file
+              sendScript(file)
             }
           }
-
           e.target.value = ""
-          activeQueue = []
-          activeQueueIndex = -1
-          renderQueue()
         })
 
         async function sendScript(file) {
           let ext = file.name.substring(file.name.lastIndexOf(".") + 1)
 
-          if (ext == "hwl") {
+          if (ext == "hwl" || file.isConvertedHwl) {
             try {
               const buffer = await readFileAsArrayBuffer(file)
-              const base64 = arrayBufferToBase64(buffer)
-              const response = await client.loadHwl(file.name, base64)
+              setOriginalScript(buffer, "hwl")
+
+              const base64 = arrayBufferToBase64(getModifiedScriptData())
+              const title = file.name.replace(/\.[^.]+$/, "")
+              const response = await client.loadHwl(title, base64)
               state = response
               updateUI()
               currentMediaType = "script"
               progressBar.disabled = false
             } catch (err) {
               console.error("HWL load error:", err)
-              alert(`Failed to load HWL: ${err.message}`)
+              showError(`Failed to load HWL: ${err.message}`)
             } finally {
               scriptBuffer = {}
-              if (syncScriptCheck.checked == true) {
-                videoSync()
-              }
+              if (syncScriptCheck.checked == true) videoSync()
               updateResyncBtnState()
             }
           } else if (ext == "funscript") {
             try {
               const text = await readFileAsText(file)
-              const response = await client.loadFunscript(file.name, text)
+              setOriginalScript(text, "funscript")
+
+              const response = await client.loadFunscript(
+                file.name,
+                getModifiedScriptData(),
+              )
               state = response
               updateUI()
               currentMediaType = "script"
               progressBar.disabled = false
             } catch (err) {
               console.error("Funscript load error:", err)
-              alert(`Failed to load funscript: ${err.message}`)
+              showError(`Failed to load funscript: ${err.message}`)
             } finally {
               scriptBuffer = {}
-              if (syncScriptCheck.checked == true) {
-                videoSync()
-              }
+              if (syncScriptCheck.checked == true) videoSync()
             }
           }
         }
@@ -2757,6 +3534,7 @@
           .addEventListener("click", async () => {
             const url = urlInput.value.trim()
             if (!url) return
+
             try {
               const resp = await fetch(url)
               const blob = await resp.blob()
@@ -2768,6 +3546,44 @@
 
               if (fileName.match(/\.(mp4|webm|ogg|mov|mkv)$/i)) {
                 loadVideo(URL.createObjectURL(file))
+              } else if (isAudioFile(fileName)) {
+                urlModal.classList.remove("open")
+                video.pause()
+                showConversionPopup(`Converting ${fileName}...`)
+
+                try {
+                  const { buffer } = await convertAudioToHWL(file)
+
+                  if (!isConnected) {
+                    setOriginalScript(buffer, "hwl")
+                    const blob = new Blob([buffer], {
+                      type: "application/octet-stream",
+                    })
+                    const hwlFile = new File([blob], fileName, {
+                      type: "application/octet-stream",
+                    })
+                    hwlFile.isConvertedHwl = true
+                    scriptBuffer = hwlFile
+                    updateUI()
+                  } else {
+                    setOriginalScript(buffer, "hwl")
+                    const title = fileName.replace(/\.[^.]+$/, "")
+                    await client.loadHwl(
+                      title,
+                      arrayBufferToBase64(getModifiedScriptData()),
+                    )
+                    state = await client.getStatus()
+                    updateUI()
+                  }
+
+                  currentMediaType = "script"
+                  progressBar.disabled = false
+                } catch (err) {
+                  showError(`Failed to convert audio from URL: ${err.message}`)
+                } finally {
+                  hideConversionPopup()
+                  updateResyncBtnState()
+                }
               } else {
                 await sendScript(file)
                 if (!isConnected) updateUI()
@@ -2776,11 +3592,10 @@
               if (url.match(/\.(mp4|webm|ogg|mov|mkv)/i)) {
                 loadVideo(url)
               } else {
-                alert("Failed to load. Check URL or CORS restrictions.")
+                showError("Failed to load. Check URL or CORS restrictions.")
               }
             }
             urlModal.classList.remove("open")
-
             activeQueue = []
             activeQueueIndex = -1
             renderQueue()
@@ -2835,6 +3650,152 @@
             clearTimeout(timeout)
             timeout = setTimeout(later, wait)
           }
+        }
+
+        // --- DELAY MODIFICATION LOGIC ---
+        function modifyHwlBuffer(originalBuffer, dA, dB) {
+          const newBuffer = originalBuffer.slice(0)
+          const view = new DataView(newBuffer)
+          const totalFrames = (newBuffer.byteLength - 8) / 16
+
+          const shiftA = Math.round(dA * 40)
+          const shiftB = Math.round(dB * 40)
+
+          const ampA = new Float32Array(totalFrames),
+            ampB = new Float32Array(totalFrames)
+          const freqA = new Float32Array(totalFrames),
+            freqB = new Float32Array(totalFrames)
+
+          for (let i = 0; i < totalFrames; i++) {
+            const o = 8 + i * 16
+            ampA[i] = view.getFloat32(o, true)
+            ampB[i] = view.getFloat32(o + 4, true)
+            freqA[i] = view.getFloat32(o + 8, true)
+            freqB[i] = view.getFloat32(o + 12, true)
+          }
+
+          function shiftArray(arr, shift) {
+            const res = new Float32Array(arr.length)
+            if (shift > 0) {
+              for (let i = shift; i < arr.length; i++) res[i] = arr[i - shift]
+            } else if (shift < 0) {
+              const abs = Math.abs(shift)
+              for (let i = 0; i < arr.length - abs; i++) res[i] = arr[i + abs]
+            } else {
+              res.set(arr)
+            }
+            return res
+          }
+
+          const sAmpA = shiftArray(ampA, shiftA),
+            sFreqA = shiftArray(freqA, shiftA)
+          const sAmpB = shiftArray(ampB, shiftB),
+            sFreqB = shiftArray(freqB, shiftB)
+
+          for (let i = 0; i < totalFrames; i++) {
+            const o = 8 + i * 16
+            view.setFloat32(o, sAmpA[i], true)
+            view.setFloat32(o + 4, sAmpB[i], true)
+            view.setFloat32(o + 8, sFreqA[i], true)
+            view.setFloat32(o + 12, sFreqB[i], true)
+          }
+          return newBuffer
+        }
+
+        function modifyFunscriptText(originalText, dA) {
+          try {
+            const data = JSON.parse(originalText)
+            if (!data.actions || data.actions.length === 0) return originalText
+            const shiftMs = dA * 1000
+            const maxTime = data.actions[data.actions.length - 1].at
+            let newActions = []
+
+            for (let i = 0; i < data.actions.length; i++) {
+              const pt = data.actions[i]
+              let newAt = pt.at + shiftMs
+              if (i === 0 && newAt < 0) newAt = 0
+              if (i === data.actions.length - 1 && newAt > maxTime)
+                newAt = maxTime
+              if (newAt >= 0 && newAt <= maxTime)
+                newActions.push({ pos: pt.pos, at: Math.round(newAt) })
+            }
+
+            let finalActions = []
+            for (let i = 0; i < newActions.length; i++) {
+              if (i === 0 || newActions[i].at !== newActions[i - 1].at)
+                finalActions.push(newActions[i])
+              else finalActions[finalActions.length - 1] = newActions[i]
+            }
+            data.actions = finalActions
+            return JSON.stringify(data)
+          } catch (e) {
+            return originalText
+          }
+        }
+
+        function setOriginalScript(bufferOrText, type) {
+          originalScriptBuffer = bufferOrText
+          currentScriptType = type
+        }
+
+        function clearOriginalScript() {
+          originalScriptBuffer = null
+          currentScriptType = null
+        }
+
+        function updateSliderFill(slider) {
+          const val = parseFloat(slider.value)
+          const min = parseFloat(slider.min)
+          const max = parseFloat(slider.max)
+          const percent = ((val - min) / (max - min)) * 100
+          const center = 50
+
+          let start = Math.min(percent, center)
+          let end = Math.max(percent, center)
+
+          const bg = `#1a1a1a`
+          const fill = `#0078d4`
+          slider.style.background = `linear-gradient(to right, ${bg} 0%, ${bg} ${start}%, ${fill} ${start}%, ${fill} ${end}%, ${bg} ${end}%, ${bg} 100%)`
+        }
+
+        function getModifiedScriptData() {
+          if (!originalScriptBuffer || !currentScriptType) return null
+          if (currentScriptType === "hwl") {
+            return delayA === 0 && delayB === 0
+              ? originalScriptBuffer
+              : modifyHwlBuffer(originalScriptBuffer, delayA, delayB)
+          } else if (currentScriptType === "funscript") {
+            return delayA === 0
+              ? originalScriptBuffer
+              : modifyFunscriptText(originalScriptBuffer, delayA)
+          }
+          return originalScriptBuffer
+        }
+
+        async function applyDelayAndResend() {
+          if (!originalScriptBuffer || !currentScriptType || !isConnected)
+            return
+
+          const currentTime = video.currentTime || state.player.position || 0
+          const wasPlaying = state.player.playing
+          const title = state.player.title || "script"
+
+          const modifiedData = getModifiedScriptData()
+
+          if (currentScriptType === "hwl") {
+            await client.loadHwl(title, arrayBufferToBase64(modifiedData))
+          } else if (currentScriptType === "funscript") {
+            await client.loadFunscript(title, modifiedData)
+          }
+
+          await client.seek(currentTime)
+          if (wasPlaying) {
+            await client.startPlayer()
+            if (video.paused && syncScriptCheck.checked)
+              video.play().catch(() => {})
+          }
+          state = await client.getStatus()
+          updateUI()
         }
 
         // --- UI Update Functions ---
@@ -2894,9 +3855,22 @@
           updatePlayerDisplay()
         }
 
+        let toastTimeout
+        function showToast(msg, type = "error") {
+          const toast = document.getElementById("toast")
+          if (!toast) return
+          toast.textContent = msg
+          toast.className = `toast ${type} show`
+          clearTimeout(toastTimeout)
+          toastTimeout = setTimeout(() => {
+            toast.classList.remove("show")
+          }, 4000)
+        }
+
         function showError(msg) {
           errorDiv.innerText = msg
           errorDiv.style.display = "block"
+          showToast(msg, "error")
         }
 
         function clearError() {
