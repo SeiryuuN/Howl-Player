@@ -1914,7 +1914,7 @@
             }
           }
 
-          return 0
+          return -1
         }
 
         async function convertAudioToHWL(audioFile) {
@@ -1959,11 +1959,12 @@
             try {
               const offset = getAudioDataOffset(arrayBuffer)
 
-              if (offset === 0 && arrayBuffer.byteLength > 1024) {
+              if (offset === -1) {
                 throw new Error("No valid MP3 frames found.")
               }
 
-              const cleanBuffer = arrayBuffer.slice(offset)
+              const cleanBuffer =
+                offset === 0 ? arrayBuffer : arrayBuffer.slice(offset)
               audioBuffer = await audioContext.decodeAudioData(cleanBuffer)
             } catch (e2) {
               audioContext.close()
@@ -2238,41 +2239,28 @@
           const fileArray = Array.from(files || [])
           if (!fileArray.length) return
 
-          const vids = fileArray.filter((f) => f.type.startsWith("video/"))
+          const vids = fileArray.filter(
+            (f) => f.type.startsWith("video/") || isVideoFile(f.name),
+          )
           const scripts = fileArray.filter((f) => isScriptFile(f.name))
           if (!vids.length && !scripts.length) return
 
-          if (vidQueue.length === 0) {
-            const firstVid = vids[0]
-            const firstScript = scripts[0]
-            const item = new VideoQueueItem(
-              firstVid ? firstVid.name : "No video",
-              firstScript ? firstScript.name : "No script",
-            )
-            if (firstVid) item.videoFile = firstVid
-            if (firstScript) {
-              item.scriptFile = firstScript
-              if (isAudioFile(firstScript.name)) {
-                item.conversionPromise = startBackgroundConversion(
-                  item,
-                  firstScript,
-                )
-              }
-            }
-            vidQueue.push(item)
-            if (firstVid) vids.shift()
-            if (firstScript) scripts.shift()
-            targetIndex = vidQueue.length
+          const initialQueueLength = vidQueue.length
+          const isExplicitTarget = targetIndex < initialQueueLength
+
+          const isNameMatch = (vBase, sBase) => {
+            if (vBase === sBase) return true
+            if (vBase.length >= 3 && sBase.includes(vBase)) return true
+            if (sBase.length >= 3 && vBase.includes(sBase)) return true
+            return false
           }
 
           vids.forEach((v, i) => {
             const actualIndex =
-              i === 0 && targetIndex < vidQueue.length
-                ? targetIndex
-                : vidQueue.length
+              i === 0 && isExplicitTarget ? targetIndex : vidQueue.length
             let item
 
-            if (vidQueue[actualIndex]) {
+            if (vidQueue[actualIndex] && actualIndex < initialQueueLength) {
               item = vidQueue[actualIndex]
               item.videoFile = v
               item.videoName = v.name
@@ -2285,10 +2273,18 @@
               vidQueue.push(item)
             }
 
-            const vidBaseName = v.name.replace(/\.[^.]+$/, "")
+            const vidBaseName = v.name
+              .replace(/\.[^.]+$/, "")
+              .toLowerCase()
+              .trim()
+
             for (let j = 0; j < scripts.length; j++) {
-              const scriptBaseName = scripts[j].name.replace(/\.[^.]+$/, "")
-              if (vidBaseName === scriptBaseName) {
+              const scriptBaseName = scripts[j].name
+                .replace(/\.[^.]+$/, "")
+                .toLowerCase()
+                .trim()
+
+              if (isNameMatch(vidBaseName, scriptBaseName)) {
                 item.scriptFile = scripts[j]
                 item.scriptName = scripts[j].name
                 if (isAudioFile(scripts[j].name)) {
@@ -2304,7 +2300,7 @@
           })
 
           scripts.forEach((s) => {
-            if (targetIndex < vidQueue.length) {
+            if (isExplicitTarget && targetIndex < vidQueue.length) {
               const targetItem = vidQueue[targetIndex]
               targetItem.scriptFile = s
               targetItem.scriptName = s.name
@@ -3113,6 +3109,17 @@
         const scriptInput = document.getElementById("script-file-input")
         const activitySelect = document.getElementById("activity-select")
         const loadActivityBtn = document.getElementById("loadActivityBtn")
+
+        const isVideoFile = (name) => {
+          const n = name.toLowerCase()
+          return (
+            n.endsWith(".mp4") ||
+            n.endsWith(".webm") ||
+            n.endsWith(".mkv") ||
+            n.endsWith(".mov") ||
+            n.endsWith(".avi")
+          )
+        }
 
         const isAudioFile = (name) => {
           const n = name.toLowerCase()
