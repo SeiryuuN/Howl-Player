@@ -564,6 +564,81 @@
         background: transparent;
       }
 
+      /* ===== FREQUENCY SLIDER ===== */
+      .freq-slider-container {
+        position: relative;
+        width: 100%;
+        height: 20px;
+        display: flex;
+        align-items: center;
+      }
+      .freq-slider-container input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        background: transparent;
+        pointer-events: none;
+        position: absolute;
+        outline: none;
+        margin: 0;
+        padding: 0;
+      }
+      .freq-slider-container
+        input[type="range"]::-webkit-slider-runnable-track {
+        height: 6px;
+        background: transparent;
+        border: none;
+      }
+      .freq-slider-container input[type="range"]::-moz-range-track {
+        height: 6px;
+        background: transparent;
+        border: none;
+      }
+      .freq-slider-container input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        margin-top: -4px;
+        pointer-events: all;
+        position: relative;
+        z-index: 2;
+      }
+      .freq-slider-container input[type="range"]::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        pointer-events: all;
+        position: relative;
+        z-index: 2;
+      }
+      .freq-slider-track {
+        position: absolute;
+        width: 100%;
+        height: 6px;
+        background: #1a1a1a;
+        box-shadow: inset 0 0 0 1px var(--border);
+        border-radius: 3px;
+        z-index: 0;
+      }
+      .freq-slider-fill {
+        position: absolute;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 3px;
+        z-index: 1;
+      }
+
       /* ===== ERROR MESSAGES ===== */
       .error-msg {
         color: var(--danger);
@@ -1057,29 +1132,80 @@
           class="row"
           style="align-items: flex-start; gap: 20px; flex-wrap: nowrap"
         >
-          <div class="col" style="max-width: 280px; flex-shrink: 0">
-            <label>Power Levels</label>
-            <div class="pwr-row" style="margin-top: 4px">
-              <span style="font-size: 13px; min-width: 90px"
-                >Channel A: <span id="val-a">0 / 0</span></span
-              >
-              <button id="pwrA-" class="pwr-btn" onclick="decrementPower(0)">
-                −
-              </button>
-              <button id="pwrA+" class="pwr-btn" onclick="incrementPower(0)">
-                +
-              </button>
+          <div class="col" style="max-width: 200px; flex-shrink: 0">
+            <label>Power</label>
+            <div class="panel-box">
+              <div class="pwr-row" style="margin-top: 4px">
+                <span style="font-size: 13px; min-width: 90px"
+                  >Channel A: <span id="val-a">0 / 0</span></span
+                >
+                <button id="pwrA-" class="pwr-btn" onclick="decrementPower(0)">
+                  −
+                </button>
+                <button id="pwrA+" class="pwr-btn" onclick="incrementPower(0)">
+                  +
+                </button>
+              </div>
+              <div class="pwr-row">
+                <span style="font-size: 13px; min-width: 90px"
+                  >Channel B: <span id="val-b">0 / 0</span></span
+                >
+                <button id="pwrB-" class="pwr-btn" onclick="decrementPower(1)">
+                  −
+                </button>
+                <button id="pwrB+" class="pwr-btn" onclick="incrementPower(1)">
+                  +
+                </button>
+              </div>
             </div>
-            <div class="pwr-row">
-              <span style="font-size: 13px; min-width: 90px"
-                >Channel B: <span id="val-b">0 / 0</span></span
+          </div>
+          <div class="col" style="max-width: 200px; flex-shrink: 0">
+            <label>Frequency</label>
+            <div
+              class="panel-box"
+              style="display: flex; flex-direction: column; gap: 8px"
+            >
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 11px;
+                  color: var(--text-dim);
+                "
               >
-              <button id="pwrB-" class="pwr-btn" onclick="decrementPower(1)">
-                −
-              </button>
-              <button id="pwrB+" class="pwr-btn" onclick="incrementPower(1)">
-                +
-              </button>
+                <span
+                  >Min:
+                  <span id="freq-min-val" style="color: var(--text-main)"
+                    >0.00</span
+                  ></span
+                >
+                <span
+                  >Max:
+                  <span id="freq-max-val" style="color: var(--text-main)"
+                    >1.00</span
+                  ></span
+                >
+              </div>
+              <div class="freq-slider-container">
+                <div class="freq-slider-track"></div>
+                <div class="freq-slider-fill" id="freq-slider-fill"></div>
+                <input
+                  type="range"
+                  id="slider-freq-min"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0"
+                />
+                <input
+                  type="range"
+                  id="slider-freq-max"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="1"
+                />
+              </div>
             </div>
           </div>
           <div class="col" style="min-width: 0">
@@ -1518,7 +1644,7 @@
                   Authorization: `Bearer ${this.accessToken}`,
                 },
                 body: JSON.stringify(body),
-                signal: AbortSignal.timeout(5000),
+                signal: AbortSignal.timeout(10000),
               })
 
               if (!response) {
@@ -1645,6 +1771,8 @@
             mute: false,
             swap_channels: false,
             auto_increase_power: false,
+            freq_range_min: 0.0,
+            freq_range_max: 0.5,
           },
           player: {
             playing: false,
@@ -1659,11 +1787,12 @@
           lastSuccessfulPoll: null,
           reconnectAttempts: 0,
           maxReconnectAttempts: 5,
-          reconnectDelay: 1000,
+          reconnectDelay: 2000,
           isReconnecting: false,
         }
 
         let currentMediaType = "script" // 'activity' or 'script'
+        let activeActivityName = null
 
         let availableActivities = []
         let pollInterval = null
@@ -1688,6 +1817,8 @@
             queueHidden: false,
             delayA: 0,
             delayB: 0,
+            freqMin: 0,
+            freqMax: 0.5,
           }
         }
 
@@ -1731,6 +1862,72 @@
           updateSliderFill(sliderB)
           clearTimeout(delayDebounce)
           delayDebounce = setTimeout(applyDelayAndResend, 300)
+        })
+
+        // frequency slider
+        const sliderFreqMin = document.getElementById("slider-freq-min")
+        const sliderFreqMax = document.getElementById("slider-freq-max")
+        const freqMinVal = document.getElementById("freq-min-val")
+        const freqMaxVal = document.getElementById("freq-max-val")
+        const freqSliderFill = document.getElementById("freq-slider-fill")
+        let freqDebounce = null
+
+        let freqMin = saveState.freqMin !== undefined ? saveState.freqMin : 0.0
+        let freqMax = saveState.freqMax !== undefined ? saveState.freqMax : 1.0
+
+        if (freqMax - freqMin < 0.01) freqMax = freqMin + 0.01
+        if (freqMax > 1) freqMax = 1
+
+        sliderFreqMin.value = freqMin
+        sliderFreqMax.value = freqMax
+        freqMinVal.textContent = freqMin.toFixed(2)
+        freqMaxVal.textContent = freqMax.toFixed(2)
+        updateFreqSliderFill()
+
+        function updateFreqSliderFill() {
+          const minPercent = freqMin * 100
+          const maxPercent = freqMax * 100
+          freqSliderFill.style.left = minPercent + "%"
+          freqSliderFill.style.width = maxPercent - minPercent + "%"
+        }
+
+        function applyFreqRange(changedSlider) {
+          if (freqMax - freqMin < 0.01) {
+            if (changedSlider === sliderFreqMin) {
+              freqMax = freqMin + 0.01
+              sliderFreqMax.value = freqMax
+              freqMaxVal.textContent = freqMax.toFixed(2)
+            } else {
+              freqMin = freqMax - 0.01
+              sliderFreqMin.value = freqMin
+              freqMinVal.textContent = freqMin.toFixed(2)
+            }
+          }
+          updateFreqSliderFill()
+          saveState.freqMin = freqMin
+          saveState.freqMax = freqMax
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+
+          clearTimeout(freqDebounce)
+          freqDebounce = setTimeout(() => {
+            if (isConnected) {
+              client
+                .setFreqRange(freqMin, freqMax)
+                .catch((err) => console.error("Freq range error:", err))
+            }
+          }, 300)
+        }
+
+        sliderFreqMin.addEventListener("input", (e) => {
+          freqMin = parseFloat(e.target.value)
+          freqMinVal.textContent = freqMin.toFixed(2)
+          applyFreqRange(sliderFreqMin)
+        })
+
+        sliderFreqMax.addEventListener("input", (e) => {
+          freqMax = parseFloat(e.target.value)
+          freqMaxVal.textContent = freqMax.toFixed(2)
+          applyFreqRange(sliderFreqMax)
         })
 
         let isHidden = saveState.barToggle
@@ -2920,6 +3117,7 @@
             lastManualSeekTime = 0
             clearError()
             clearOriginalScript()
+            activeActivityName = null
 
             // Reset UI
             updateConnectionUI("Not connected", "")
@@ -2949,6 +3147,8 @@
               showError("Please enter an IP address.")
               return
             }
+
+            updateConnectionUI("Connecting...", "var(--accent)")
 
             client.configure(ip, key)
 
@@ -2994,6 +3194,8 @@
               updateBottomConnectBtn()
               controlsDisable(false)
 
+              client.setFreqRange(freqMin, freqMax).catch(() => {})
+
               // Fetch available activities once on connect
               try {
                 const activitiesResponse = await client.getAvailableActivities()
@@ -3005,6 +3207,8 @@
                 populateActivityDropdown([])
               }
             } catch (err) {
+              updateConnectionUI("Connection failed", "var(--danger)")
+
               if (err.isNetworkError) {
                 showError(`Cannot reach server at ${ip}. Check IP and network.`)
               } else {
@@ -3386,6 +3590,7 @@
 
         loadActivityBtn.addEventListener("click", async () => {
           const name = activitySelect.value
+          activeActivityName = name
           if (!name) return
 
           loadActivityBtn.disabled = true
@@ -3471,6 +3676,7 @@
           let ext = file.name.substring(file.name.lastIndexOf(".") + 1)
 
           if (ext == "hwl" || file.isConvertedHwl) {
+            activeActivityName = null
             try {
               const buffer = await readFileAsArrayBuffer(file)
               setOriginalScript(buffer, "hwl")
@@ -3986,7 +4192,10 @@
           if (connectionState.status === "lost") return
 
           connectionState.status = "lost"
-          updateConnectionUI("Connection lost", "var(--danger)")
+          updateConnectionUI(
+            "Connection lost. Reconnecting...",
+            "var(--danger)",
+          )
 
           controlsDisable(true)
 
@@ -3998,13 +4207,30 @@
             connectionState.reconnectAttempts >=
             connectionState.maxReconnectAttempts
           ) {
-            updateConnectionUI("Reconnect failed", "var(--danger)")
+            connectionState.status = "disconnected"
+            connectionState.reconnectAttempts = 0
             connectionState.isReconnecting = false
+            isConnected = false
+
+            updateConnectionUI("Reconnect failed", "var(--danger)")
+
+            connToggle.textContent = "Connect"
+            connToggle.classList.add("primary")
+            connToggle.style.borderColor = ""
+            connToggle.style.color = ""
+            connToggle.style.background = ""
+
+            updateBottomConnectBtn()
             return
           }
 
           connectionState.isReconnecting = true
           connectionState.reconnectAttempts++
+
+          updateConnectionUI(
+            `Connection lost. Reconnecting (${connectionState.reconnectAttempts}/${connectionState.maxReconnectAttempts})...`,
+            "var(--danger)",
+          )
 
           const delay = Math.min(
             connectionState.reconnectDelay *
@@ -4014,6 +4240,13 @@
 
           setTimeout(async () => {
             try {
+              const wasPlaying = state.player.playing
+              const wasActivity = currentMediaType === "activity"
+              const activityToRestore = activeActivityName
+
+              const localScriptPosition = state.player.position || 0
+              const localScriptWasPlaying = wasPlaying
+
               await client.getStatus()
               connectionState.status = "connected"
               updateConnectionUI(
@@ -4022,6 +4255,71 @@
               )
               controlsDisable(false)
               startPolling()
+
+              client.setFreqRange(freqMin, freqMax).catch(() => {})
+
+              if (wasActivity && activityToRestore) {
+                try {
+                  const response = await client.loadActivity(activityToRestore)
+                  state = response
+                } catch (err) {
+                  console.error("Activity restoration failed:", err)
+                }
+              } else if (originalScriptBuffer && currentScriptType) {
+                const title = state.player.title || "script"
+                try {
+                  if (currentScriptType === "hwl") {
+                    await client.loadHwl(
+                      title,
+                      arrayBufferToBase64(getModifiedScriptData()),
+                    )
+                  } else if (currentScriptType === "funscript") {
+                    await client.loadFunscript(title, getModifiedScriptData())
+                  }
+                } catch (err) {
+                  console.error("Script restoration failed:", err)
+                }
+              }
+
+              try {
+                if (wasActivity) {
+                  if (wasPlaying) {
+                    await client.startPlayer()
+                  } else {
+                    await client.stopPlayer()
+                  }
+                } else {
+                  if (syncScriptCheck.checked) {
+                    const restoreTime =
+                      video.currentTime > 0
+                        ? video.currentTime
+                        : localScriptPosition
+
+                    await client.seek(restoreTime)
+
+                    const localWasPlaying =
+                      !video.paused && video.readyState >= 2
+                    if (localWasPlaying) {
+                      await client.startPlayer()
+                      if (video.paused) {
+                        video.play().catch(() => {})
+                      }
+                    } else {
+                      await client.stopPlayer()
+                    }
+                  } else {
+                    await client.seek(localScriptPosition)
+
+                    if (localScriptWasPlaying) {
+                      await client.startPlayer()
+                    } else {
+                      await client.stopPlayer()
+                    }
+                  }
+                }
+              } catch (err) {
+                console.error("Playback restoration failed:", err)
+              }
             } catch (err) {
               if (err.isNetworkError) {
                 attemptReconnect()
