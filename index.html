@@ -101,12 +101,18 @@
         align-items: safe center;
         justify-content: safe center;
       }
+      .video-inner:fullscreen {
+        background: #000;
+      }
 
       #mainVideo {
         flex-shrink: 0;
         box-shadow: var(--shadow-video);
         max-width: 100%;
         max-height: 100%;
+      }
+      #mainVideo::-webkit-media-controls-fullscreen-button {
+        display: none !important;
       }
 
       /* ===== TABS PANELS ===== */
@@ -359,15 +365,20 @@
 
       /* Power buttons */
       .pwr-btn {
-        width: 28px;
-        height: var(--button-height-md);
+        position: relative;
+        width: 32px;
+        height: 32px;
         padding: 0;
         text-align: center;
         background: var(--bg-input);
         border: 1px solid var(--border);
         border-radius: 4px;
-        font-size: 14px;
+        font-size: 16px;
         line-height: 1;
+        flex-shrink: 0;
+      }
+      .pwr-btn:focus-visible {
+        z-index: 2;
       }
 
       /* Toggle button */
@@ -438,7 +449,7 @@
       .pwr-row {
         display: flex;
         align-items: center;
-        gap: var(--spacing-sm);
+        gap: 4px;
         font-size: 13px;
       }
 
@@ -1088,13 +1099,192 @@
       .toast.success {
         background: var(--success);
       }
+
+      /* ===== HOTKEY LABELS ===== */
+      .hotkey-label {
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--text-dim);
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        border-radius: 2px;
+        padding: 0 3px;
+        margin-left: 3px;
+        height: 16px;
+        min-width: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        opacity: 0.7;
+        user-select: none;
+      }
+
+      /* ===== POWER POPUP OVERLAY ===== */
+      .power-popup {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        color: var(--text-main);
+        box-shadow: var(--shadow-video);
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        transform: translateY(12px);
+        transition:
+          opacity 0.25s ease,
+          transform 0.25s ease;
+        pointer-events: none;
+      }
+      .power-popup.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .power-popup .power-popup-group {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .power-popup .power-popup-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .power-popup .power-popup-val {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--accent);
+      }
+      .power-popup .power-popup-separator {
+        color: var(--border);
+        font-size: 12px;
+      }
+      #val-a,
+      #val-b,
+      .power-popup-val {
+        font-variant-numeric: tabular-nums;
+      }
+      .power-popup-val {
+        display: inline-block;
+        min-width: 3ch;
+        text-align: right;
+      }
+
+      /* ===== FULLSCREEN BUTTON ===== */
+      .fs-btn {
+        position: absolute;
+        right: 12px;
+        bottom: 60px;
+        z-index: 35;
+        width: 44px;
+        height: 36px;
+        padding: 0;
+        font-size: 16px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-fast);
+      }
+      .video-area:hover .fs-btn,
+      .fs-btn:focus-visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      body:fullscreen .fs-btn {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      body:fullscreen.fs-idle .fs-btn {
+        opacity: 0;
+        pointer-events: none;
+      }
+      body:fullscreen.fs-idle {
+        cursor: none;
+      }
+
+      /* ===== FULLSCREEN ===== */
+      body:fullscreen .tabs-area,
+      body:fullscreen .bottom-bar,
+      body:fullscreen .hover-zone,
+      body:fullscreen .queue-panel,
+      body:fullscreen .queue-hover-zone {
+        display: none !important;
+      }
+      body:fullscreen #app {
+        padding-bottom: 0 !important;
+        transition: none;
+      }
+      body:fullscreen.fs-idle .fs-btn {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.6s ease;
+      }
+      body:fullscreen #mainVideo {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+        object-fit: contain;
+      }
+
+      /* ===== VISUALIZER OVERLAY ===== */
+      .viz-canvas {
+        position: absolute;
+        bottom: 76px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 25;
+        pointer-events: none;
+      }
+      .viz-color-input {
+        padding: 2px;
+        height: 24px;
+        width: 44px;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <div class="app-container tabs-closed" id="app">
       <div class="video-area">
-        <div class="video-inner">
-          <video id="mainVideo" controls playsinline></video>
+        <div class="video-inner" style="position: relative">
+          <video
+            id="mainVideo"
+            controls
+            playsinline
+            controlsList="nofullscreen"
+          ></video>
+          <div id="power-popup" class="power-popup">
+            <div class="power-popup-group">
+              <span class="power-popup-label">A</span>
+              <span id="popup-val-a" class="power-popup-val">0</span>
+            </div>
+            <span class="power-popup-separator">|</span>
+            <div class="power-popup-group">
+              <span class="power-popup-label">B</span>
+              <span id="popup-val-b" class="power-popup-val">0</span>
+            </div>
+          </div>
+          <canvas id="viz-canvas" class="viz-canvas"></canvas>
+          <button id="fs-btn" class="fs-btn" title="Fullscreen (F)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
+              />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -1134,28 +1324,37 @@
         >
           <div class="col" style="max-width: 200px; flex-shrink: 0">
             <label>Power</label>
-            <div class="panel-box">
+            <div
+              class="panel-box"
+              style="padding: var(--spacing-sm) var(--spacing-md)"
+            >
               <div class="pwr-row" style="margin-top: 4px">
-                <span style="font-size: 13px; min-width: 90px"
-                  >Channel A: <span id="val-a">0 / 0</span></span
+                <span
+                  style="font-size: 13px; min-width: 70px; white-space: nowrap"
+                  >A: <span id="val-a">0 / 0</span></span
                 >
+                <span class="hotkey-label">S</span>
                 <button id="pwrA-" class="pwr-btn" onclick="decrementPower(0)">
                   −
                 </button>
                 <button id="pwrA+" class="pwr-btn" onclick="incrementPower(0)">
                   +
                 </button>
+                <span class="hotkey-label">W</span>
               </div>
               <div class="pwr-row">
-                <span style="font-size: 13px; min-width: 90px"
-                  >Channel B: <span id="val-b">0 / 0</span></span
+                <span
+                  style="font-size: 13px; min-width: 70px; white-space: nowrap"
+                  >B: <span id="val-b">0 / 0</span></span
                 >
+                <span class="hotkey-label">A</span>
                 <button id="pwrB-" class="pwr-btn" onclick="decrementPower(1)">
                   −
                 </button>
                 <button id="pwrB+" class="pwr-btn" onclick="incrementPower(1)">
                   +
                 </button>
+                <span class="hotkey-label">D</span>
               </div>
             </div>
           </div>
@@ -1501,6 +1700,465 @@
         </div>
       </div>
 
+      <!-- VISUALIZER PANEL -->
+      <div class="tab-panel" id="panel-visualizer">
+        <div
+          class="row"
+          style="width: 100%; align-items: flex-start; gap: 20px"
+        >
+          <div class="col" style="flex: 1; min-width: 280px">
+            <label>Channel A</label>
+            <div
+              class="panel-box"
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 3px 14px;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  grid-column: 1 / -1;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="viz-a-enable"
+                  style="margin: 0; flex-shrink: 0"
+                />
+                <label
+                  for="viz-a-enable"
+                  style="font-size: 12px; cursor: pointer"
+                  >Enable</label
+                >
+                <span class="hotkey-label">Q</span>
+                <input
+                  type="checkbox"
+                  id="viz-a-base"
+                  style="margin: 0; flex-shrink: 0; margin-left: 10px"
+                />
+                <label for="viz-a-base" style="font-size: 11px; cursor: pointer"
+                  >Baseline</label
+                >
+                <input
+                  type="checkbox"
+                  id="viz-a-freq"
+                  style="margin: 0; flex-shrink: 0; margin-left: 10px"
+                />
+                <label for="viz-a-freq" style="font-size: 11px; cursor: pointer"
+                  >Freq</label
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 54px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Opacity:
+                  <span id="viz-a-op-val" style="color: var(--text-main)"
+                    >0.50</span
+                  ></label
+                >
+                <input
+                  type="range"
+                  id="viz-a-opacity"
+                  class="delay-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0.5"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 54px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Line:
+                  <span id="viz-a-lw-val" style="color: var(--text-main)"
+                    >2.0</span
+                  ></label
+                >
+                <input
+                  type="range"
+                  id="viz-a-linewidth"
+                  class="delay-slider"
+                  min="1"
+                  max="6"
+                  step="0.5"
+                  value="2"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label style="font-size: 11px; color: var(--text-dim)"
+                  >Curve</label
+                >
+                <input
+                  type="color"
+                  id="viz-a-color"
+                  class="viz-color-input"
+                  value="#00e5ff"
+                />
+                <label style="font-size: 11px; color: var(--text-dim)"
+                  >Dot</label
+                >
+                <input
+                  type="color"
+                  id="viz-a-dot-color"
+                  class="viz-color-input"
+                  value="#00e5ff"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label style="font-size: 11px; color: var(--text-dim)"
+                  >BG</label
+                >
+                <input
+                  type="color"
+                  id="viz-a-bg-color"
+                  class="viz-color-input"
+                  value="#000000"
+                />
+                <input
+                  type="range"
+                  id="viz-a-bg-opacity"
+                  class="delay-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0"
+                  style="flex: 1; min-width: 0"
+                />
+                <span
+                  id="viz-a-bg-op-val"
+                  style="
+                    font-size: 11px;
+                    color: var(--text-main);
+                    min-width: 26px;
+                    text-align: right;
+                  "
+                  >0.00</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="col" style="flex: 1; min-width: 280px">
+            <label>Channel B</label>
+            <div
+              class="panel-box"
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 3px 14px;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  grid-column: 1 / -1;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="viz-b-enable"
+                  style="margin: 0; flex-shrink: 0"
+                />
+                <label
+                  for="viz-b-enable"
+                  style="font-size: 12px; cursor: pointer"
+                  >Enable</label
+                >
+                <span class="hotkey-label">E</span>
+                <input
+                  type="checkbox"
+                  id="viz-b-base"
+                  style="margin: 0; flex-shrink: 0; margin-left: 10px"
+                />
+                <label for="viz-b-base" style="font-size: 11px; cursor: pointer"
+                  >Baseline</label
+                >
+                <input
+                  type="checkbox"
+                  id="viz-b-freq"
+                  style="margin: 0; flex-shrink: 0; margin-left: 10px"
+                />
+                <label for="viz-b-freq" style="font-size: 11px; cursor: pointer"
+                  >Freq</label
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 54px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Opacity:
+                  <span id="viz-b-op-val" style="color: var(--text-main)"
+                    >0.50</span
+                  ></label
+                >
+                <input
+                  type="range"
+                  id="viz-b-opacity"
+                  class="delay-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0.5"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 54px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Line:
+                  <span id="viz-b-lw-val" style="color: var(--text-main)"
+                    >2.0</span
+                  ></label
+                >
+                <input
+                  type="range"
+                  id="viz-b-linewidth"
+                  class="delay-slider"
+                  min="1"
+                  max="6"
+                  step="0.5"
+                  value="2"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label style="font-size: 11px; color: var(--text-dim)"
+                  >Curve</label
+                >
+                <input
+                  type="color"
+                  id="viz-b-color"
+                  class="viz-color-input"
+                  value="#ff5c8a"
+                />
+                <label style="font-size: 11px; color: var(--text-dim)"
+                  >Dot</label
+                >
+                <input
+                  type="color"
+                  id="viz-b-dot-color"
+                  class="viz-color-input"
+                  value="#ff5c8a"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label style="font-size: 11px; color: var(--text-dim)"
+                  >BG</label
+                >
+                <input
+                  type="color"
+                  id="viz-b-bg-color"
+                  class="viz-color-input"
+                  value="#000000"
+                />
+                <input
+                  type="range"
+                  id="viz-b-bg-opacity"
+                  class="delay-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0"
+                  style="flex: 1; min-width: 0"
+                />
+                <span
+                  id="viz-b-bg-op-val"
+                  style="
+                    font-size: 11px;
+                    color: var(--text-main);
+                    min-width: 26px;
+                    text-align: right;
+                  "
+                  >0.00</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="col" style="flex: 1; min-width: 280px">
+            <label>Graph</label>
+            <div
+              class="panel-box"
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 3px 16px;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 62px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Left:
+                  <span id="viz-win-left-val" style="color: var(--text-main)"
+                    >2.0</span
+                  >s</label
+                >
+                <input
+                  type="range"
+                  id="viz-win-left"
+                  class="delay-slider"
+                  min="0"
+                  max="10"
+                  step="0.5"
+                  value="2"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 62px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Right:
+                  <span id="viz-win-right-val" style="color: var(--text-main)"
+                    >2.0</span
+                  >s</label
+                >
+                <input
+                  type="range"
+                  id="viz-win-right"
+                  class="delay-slider"
+                  min="0"
+                  max="10"
+                  step="0.5"
+                  value="2"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 62px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Height:
+                  <span id="viz-height-val" style="color: var(--text-main)"
+                    >110</span
+                  ></label
+                >
+                <input
+                  type="range"
+                  id="viz-height"
+                  class="delay-slider"
+                  min="40"
+                  max="200"
+                  step="5"
+                  value="110"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 62px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Width:
+                  <span id="viz-width-val" style="color: var(--text-main)"
+                    >60</span
+                  >%</label
+                >
+                <input
+                  type="range"
+                  id="viz-width"
+                  class="delay-slider"
+                  min="30"
+                  max="100"
+                  step="5"
+                  value="60"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 62px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Gap:
+                  <span id="viz-gap-val" style="color: var(--text-main)"
+                    >30</span
+                  ></label
+                >
+                <input
+                  type="range"
+                  id="viz-gap"
+                  class="delay-slider"
+                  min="0"
+                  max="600"
+                  step="2"
+                  value="28"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px">
+                <label
+                  style="
+                    min-width: 62px;
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    white-space: nowrap;
+                  "
+                  >Dot size:
+                  <span id="viz-dot-size-val" style="color: var(--text-main)"
+                    >5</span
+                  ></label
+                >
+                <input
+                  type="range"
+                  id="viz-dot-size"
+                  class="delay-slider"
+                  min="2"
+                  max="12"
+                  step="1"
+                  value="5"
+                  style="flex: 1; min-width: 0"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- CONNECTION PANEL -->
       <div class="tab-panel" id="panel-connection">
         <div
@@ -1540,6 +2198,9 @@
           Controls
         </button>
         <button class="tab-btn" data-target="panel-activity">Activity</button>
+        <button class="tab-btn" data-target="panel-visualizer">
+          Visualizer
+        </button>
         <button class="tab-btn" data-target="panel-connection">
           Connection
         </button>
@@ -1946,29 +2607,50 @@
           scale = Math.max(0.05, s)
           video.style.width = `${natW * scale}px`
           video.style.height = `${natH * scale}px`
+          requestAnimationFrame(updateFsBtnOffset)
         }
 
-        function doFit() {
-          if (!fitActive) return
-
+        function computeFitScale() {
           const area = document.querySelector(".video-area")
-          const queueOffset = saveState.queueHidden ? 0 : 281
-
-          const maxW = area.clientWidth - 20 - queueOffset
-          const maxH = area.clientHeight - 20
-
-          if (maxW <= 0 || maxH <= 0) return
-
+          const fs = !!document.fullscreenElement
+          const queueOffset = saveState.queueHidden || fs ? 0 : 281
+          const margin = fs ? 0 : 20
+          const maxW = area.clientWidth - margin - queueOffset
+          const maxH = area.clientHeight - margin
+          if (maxW <= 0 || maxH <= 0) return null
           const ratio = natW / natH
           let w = maxW,
             h = w / ratio
-
           if (h > maxH) {
             h = maxH
             w = h * ratio
           }
+          return w / natW
+        }
 
-          applyScale(w / natW)
+        function doFit() {
+          if (!fitActive) return
+          const s = computeFitScale()
+          if (s !== null) applyScale(s)
+        }
+
+        function fitFullscreen() {
+          const s = computeFitScale()
+          if (s !== null) applyScale(s)
+          updateFsBtnOffset()
+        }
+
+        function updateFsBtnOffset() {
+          const btn = document.getElementById("fs-btn")
+          const inner = document.querySelector(".video-inner")
+          if (!btn || !inner) return
+          const gapY = Math.max(
+            0,
+            (inner.clientHeight - video.offsetHeight) / 2,
+          )
+          const gapX = Math.max(0, (inner.clientWidth - video.offsetWidth) / 2)
+          btn.style.bottom = Math.round(gapY + 76) + "px"
+          btn.style.right = Math.round(gapX + 12) + "px"
         }
 
         function setFitActive(active) {
@@ -2006,6 +2688,7 @@
 
         window.addEventListener("resize", () => {
           if (fitActive) doFit()
+          layoutVizCanvas()
         })
 
         video.addEventListener("loadedmetadata", () => {
@@ -2710,6 +3393,7 @@
           localStorage.setItem("saveState", JSON.stringify(saveState))
           applyQueuePanelState()
           if (fitActive) doFit()
+          layoutVizCanvas()
         }
 
         function startQueueHideTimer() {
@@ -3949,11 +4633,15 @@
         function setOriginalScript(bufferOrText, type) {
           originalScriptBuffer = bufferOrText
           currentScriptType = type
+          buildVizData()
+          layoutVizCanvas()
         }
 
         function clearOriginalScript() {
           originalScriptBuffer = null
           currentScriptType = null
+          vizData = null
+          layoutVizCanvas()
         }
 
         function updateSliderFill(slider) {
@@ -4018,12 +4706,23 @@
           powerADisplay.innerText = opts.power_a + " / " + opts.power_a_limit
           powerBDisplay.innerText = opts.power_b + " / " + opts.power_b_limit
 
+          // Update power popup values
+          const popupA = document.getElementById("popup-val-a")
+          const popupB = document.getElementById("popup-val-b")
+          if (popupA) popupA.textContent = opts.power_a
+          if (popupB) popupB.textContent = opts.power_b
+
+          // Update connection status bar with current power values when connected
+          if (isConnected) {
+            connStatus.textContent = `Connected | A: ${opts.power_a} | B: ${opts.power_b}`
+            connStatus.style.color = "var(--success)"
+          }
+
           btnMute.classList.toggle("primary", opts.mute)
           btnSwap.classList.toggle("primary", opts.swap_channels)
           btnAuto.classList.toggle("primary", opts.auto_increase_power)
 
           updateResyncBtnState()
-
           updatePlayerUI()
         }
 
@@ -4332,7 +5031,12 @@
         }
 
         function updateConnectionUI(text, color) {
-          connStatus.textContent = text
+          if (color === "var(--success)" && isConnected) {
+            const opts = state.options
+            connStatus.textContent = `Connected | A: ${opts.power_a} | B: ${opts.power_b}`
+          } else {
+            connStatus.textContent = text
+          }
           connStatus.style.color = color
         }
 
@@ -4355,6 +5059,746 @@
 
           updateResyncBtnState()
         }
+
+        // --- Hotkeys ---
+        let powerPopupTimeout = null
+
+        function showPowerPopup() {
+          const popup = document.getElementById("power-popup")
+          if (!popup) return
+
+          popup.classList.add("show")
+          clearTimeout(powerPopupTimeout)
+          powerPopupTimeout = setTimeout(() => {
+            popup.classList.remove("show")
+          }, 2000)
+        }
+
+        document.querySelectorAll(".pwr-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            if (e.detail > 0) btn.blur()
+          })
+        })
+
+        document.addEventListener("keydown", (e) => {
+          // Skip if typing in an input field
+          const tag = e.target.tagName.toLowerCase()
+          if (tag === "input" || tag === "textarea" || tag === "select") return
+
+          if (!isConnected) return
+
+          switch (e.key.toLowerCase()) {
+            case "w":
+              if (e.repeat) return
+              e.preventDefault()
+              window.incrementPower(0)
+              showPowerPopup()
+              break
+
+            case "d":
+              if (e.repeat) return
+              e.preventDefault()
+              window.incrementPower(1)
+              showPowerPopup()
+              break
+
+            case "s":
+              e.preventDefault()
+              window.decrementPower(0)
+              showPowerPopup()
+              break
+
+            case "a":
+              e.preventDefault()
+              window.decrementPower(1)
+              showPowerPopup()
+              break
+          }
+        })
+
+        // --- fullscreen handler ---
+        const fsBtn = document.getElementById("fs-btn")
+        let fsIdleTimer = null
+        const FS_IDLE_MS = 2500
+
+        const FS_ICON_ENTER = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`
+        const FS_ICON_EXIT = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`
+
+        function setFsIcon(fs) {
+          fsBtn.innerHTML = fs ? FS_ICON_EXIT : FS_ICON_ENTER
+        }
+
+        function toggleFullscreen() {
+          if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {})
+          } else {
+            document.body.requestFullscreen().catch(() => {})
+          }
+        }
+
+        function armFsIdle() {
+          clearTimeout(fsIdleTimer)
+          document.body.classList.remove("fs-idle")
+          const fs = !!document.fullscreenElement
+          const playing = !video.paused && !video.ended
+          if (fs && playing) {
+            fsIdleTimer = setTimeout(() => {
+              document.body.classList.add("fs-idle")
+            }, FS_IDLE_MS)
+          }
+        }
+
+        document.addEventListener("mouseleave", () => {
+          if (!document.fullscreenElement) return
+          clearTimeout(fsIdleTimer)
+          if (!video.paused && !video.ended) {
+            document.body.classList.add("fs-idle")
+          }
+        })
+
+        fsBtn.addEventListener("click", toggleFullscreen)
+        fsBtn.addEventListener("click", (e) => {
+          if (e.detail > 0) fsBtn.blur()
+        })
+
+        document.addEventListener("mousemove", () => {
+          if (document.fullscreenElement) armFsIdle()
+        })
+        video.addEventListener("play", armFsIdle)
+        video.addEventListener("pause", armFsIdle)
+        video.addEventListener("ended", armFsIdle)
+
+        document.addEventListener("keydown", (e) => {
+          const tag = e.target.tagName.toLowerCase()
+          if (tag === "input" || tag === "textarea" || tag === "select") return
+          if (e.key.toLowerCase() === "f" && !e.repeat) {
+            e.preventDefault()
+            toggleFullscreen()
+          }
+        })
+
+        document.addEventListener("fullscreenchange", () => {
+          const fs = !!document.fullscreenElement
+          fsBtn.classList.toggle("active", fs)
+          setFsIcon(fs)
+          fsBtn.title = fs ? "Exit Fullscreen (F)" : "Fullscreen (F)"
+          const va = document.querySelector(".video-area")
+          if (fs) {
+            va.style.paddingRight = "0px"
+            requestAnimationFrame(fitFullscreen)
+            setTimeout(fitFullscreen, 100)
+            layoutVizCanvas()
+            setTimeout(layoutVizCanvas, 100)
+          } else {
+            updateAppPadding()
+            if (!fitActive) applyScale(saveState.scale || 1)
+            layoutVizCanvas()
+            setTimeout(() => {
+              if (fitActive) doFit()
+              updateFsBtnOffset()
+              layoutVizCanvas()
+            }, 350)
+          }
+          updateFsBtnOffset()
+          armFsIdle()
+        })
+
+        // --- Visualizer ---
+        const vizCanvas = document.getElementById("viz-canvas")
+        const vizCtx = vizCanvas.getContext("2d")
+
+        const VIZ_DEFAULTS = {
+          enabledA: true,
+          enabledB: true,
+          opacityA: 0.5,
+          opacityB: 0.5,
+          colorA: "#00e5ff",
+          colorB: "#ff5c8a",
+          colorDotA: "#0000ff",
+          colorDotB: "#ff0000",
+          dotSize: 5,
+          lineWidthA: 2,
+          lineWidthB: 2,
+          showBaseA: true,
+          showBaseB: true,
+          freqA: false,
+          freqB: false,
+          bgColorA: "#000000",
+          bgOpacityA: 0,
+          bgColorB: "#000000",
+          bgOpacityB: 0,
+          gap: 30,
+          winLeft: 2,
+          winRight: 2,
+          height: 110,
+          width: 60,
+        }
+        let viz = Object.assign({}, VIZ_DEFAULTS, saveState.viz || {})
+        function saveViz() {
+          saveState.viz = viz
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+        }
+
+        let vizData = null
+
+        // Visualizer data
+        function buildVizData() {
+          vizData = null
+          if (!originalScriptBuffer || !currentScriptType) return
+          try {
+            if (currentScriptType === "hwl") {
+              const buf = originalScriptBuffer
+              const view = new DataView(buf)
+              const n = Math.floor((buf.byteLength - 8) / 16)
+              if (n < 2) return
+              const ampA = new Float32Array(n),
+                ampB = new Float32Array(n)
+              const freqA = new Float32Array(n),
+                freqB = new Float32Array(n)
+              for (let i = 0; i < n; i++) {
+                const o = 8 + i * 16
+                ampA[i] = view.getFloat32(o, true)
+                ampB[i] = view.getFloat32(o + 4, true)
+                freqA[i] = view.getFloat32(o + 8, true)
+                freqB[i] = view.getFloat32(o + 12, true)
+              }
+              vizData = {
+                type: "hwl",
+                dt: 0.025,
+                ampA,
+                ampB,
+                freqA,
+                freqB,
+                duration: (n - 1) * 0.025,
+              }
+            } else {
+              const data = JSON.parse(originalScriptBuffer)
+              if (!data.actions || data.actions.length < 2) return
+              const pts = data.actions
+                .map((a) => ({ t: a.at / 1000, v: a.pos / 100 }))
+                .filter((p, i, arr) => i === 0 || p.t > arr[i - 1].t)
+              if (pts.length < 2) return
+              const n = pts.length
+              const m = new Float64Array(n - 1),
+                sl = new Float64Array(n)
+              for (let i = 0; i < n - 1; i++)
+                m[i] =
+                  pts[i + 1].t > pts[i].t
+                    ? (pts[i + 1].v - pts[i].v) / (pts[i + 1].t - pts[i].t)
+                    : 0
+              sl[0] = m[0]
+              for (let i = 1; i < n - 1; i++)
+                sl[i] =
+                  m[i - 1] * m[i] <= 0
+                    ? 0
+                    : (pts[i + 1].t - pts[i - 1].t) /
+                      ((pts[i].t - pts[i - 1].t) / m[i - 1] +
+                        (pts[i + 1].t - pts[i].t) / m[i])
+              sl[n - 1] = m[n - 2]
+              for (let i = 0; i < n - 1; i++) {
+                const dt = pts[i + 1].t - pts[i].t
+                if (!dt) continue
+                const maxT = 3 * Math.abs(m[i])
+                sl[i] = Math.sign(sl[i]) * Math.min(Math.abs(sl[i]), maxT)
+                sl[i + 1] =
+                  Math.sign(sl[i + 1]) * Math.min(Math.abs(sl[i + 1]), maxT)
+              }
+              vizData = {
+                type: "funscript",
+                pts,
+                slopes: sl,
+                duration: pts[n - 1].t,
+              }
+            }
+          } catch (e) {
+            console.error("Viz build error:", e)
+          }
+        }
+
+        function vizValueAt(ch, t) {
+          if (!vizData || t < 0 || t > vizData.duration) return null
+          if (vizData.type === "hwl") {
+            const arr = ch === 0 ? vizData.ampA : vizData.ampB
+            const idx = t / vizData.dt
+            const i0 = Math.min(arr.length - 1, Math.floor(idx))
+            const i1 = Math.min(arr.length - 1, i0 + 1)
+            const f = idx - i0
+            return arr[i0] + (arr[i1] - arr[i0]) * f
+          }
+          const pts = vizData.pts
+          if (t <= pts[0].t) return pts[0].v
+          if (t >= pts[pts.length - 1].t) return pts[pts.length - 1].v
+          let lo = 0,
+            hi = pts.length - 1
+          while (hi - lo > 1) {
+            const mid = (lo + hi) >> 1
+            if (pts[mid].t <= t) lo = mid
+            else hi = mid
+          }
+          const a = pts[lo],
+            b = pts[hi]
+          const f = (t - a.t) / (b.t - a.t || 1)
+          return a.v + (b.v - a.v) * f
+        }
+
+        function freqValueAt(ch, t) {
+          if (
+            !vizData ||
+            vizData.type !== "hwl" ||
+            t < 0 ||
+            t > vizData.duration
+          )
+            return null
+          const arr = ch === 0 ? vizData.freqA : vizData.freqB
+          const idx = t / vizData.dt
+          const i0 = Math.min(arr.length - 1, Math.floor(idx))
+          const i1 = Math.min(arr.length - 1, i0 + 1)
+          const f = idx - i0
+          return arr[i0] + (arr[i1] - arr[i0]) * f
+        }
+
+        function freqColor(v) {
+          const x = Math.max(0, Math.min(1, v))
+          let r, g
+          if (x < 0.5) {
+            const f = x / 0.5
+            r = Math.round(255 * f)
+            g = Math.round(180 + 50 * f)
+          } else {
+            const f = (x - 0.5) / 0.5
+            r = 255
+            g = Math.round(230 * (1 - f))
+          }
+          return `rgb(${r},${g},0)`
+        }
+
+        // Culling
+        function vizWindowPoints(ch, t0, t1) {
+          const res = []
+          const a = Math.max(0, t0),
+            b = Math.min(vizData.duration, t1)
+          if (a > b) return res
+          if (vizData.type === "hwl") {
+            const arr = ch === 0 ? vizData.ampA : vizData.ampB
+            const dt = vizData.dt
+            if (t0 > 0) res.push({ t: a, v: vizValueAt(ch, a), s: null })
+            const i0 = Math.max(0, Math.ceil(a / dt - 1e-6))
+            const i1 = Math.min(arr.length - 1, Math.floor(b / dt + 1e-6))
+            for (let i = i0; i <= i1; i++)
+              res.push({ t: i * dt, v: arr[i], s: null })
+            if (t1 < vizData.duration)
+              res.push({ t: b, v: vizValueAt(ch, b), s: null })
+          } else {
+            const pts = vizData.pts,
+              sl = vizData.slopes
+            if (t0 > 0 && a > pts[0].t) {
+              let lo = 0,
+                hi = pts.length - 1
+              while (hi - lo > 1) {
+                const mid = (lo + hi) >> 1
+                if (pts[mid].t < a) lo = mid
+                else hi = mid
+              }
+              res.push({ t: a, v: vizValueAt(ch, a), s: sl[lo] })
+            }
+            let lo = 0,
+              hi = pts.length - 1
+            while (hi - lo > 1) {
+              const mid = (lo + hi) >> 1
+              if (pts[mid].t < a) lo = mid
+              else hi = mid
+            }
+            for (
+              let i = pts[lo].t >= a ? lo : hi;
+              i < pts.length && pts[i].t <= b;
+              i++
+            )
+              res.push({ t: pts[i].t, v: pts[i].v, s: sl[i] })
+            if (t1 < vizData.duration && b < pts[pts.length - 1].t)
+              res.push({ t: b, v: vizValueAt(ch, b), s: sl[hi] })
+          }
+          return res
+        }
+
+        function drawVizChannel(ctx, ox, gw, h, t, cfg) {
+          const topPad = 8,
+            basePad = 8
+          const hW = h - topPad - basePad
+          const baseY = h - basePad
+
+          const layL = Math.max(viz.winLeft, 0.5)
+          const layR = Math.max(viz.winRight, 0.5)
+          const span = layL + layR
+          const xOf = (time) => ox + ((time - (t - layL)) / span) * gw
+          const yOf = (v) => topPad + hW - v * hW
+
+          // Background
+          if (cfg.bgOpacity > 0) {
+            ctx.globalAlpha = cfg.bgOpacity
+            ctx.fillStyle = cfg.bgColor
+            ctx.fillRect(ox, 0, gw, h)
+          }
+
+          const pts = vizWindowPoints(
+            cfg.ch,
+            t - viz.winLeft - cfg.shift,
+            t + viz.winRight - cfg.shift,
+          )
+
+          // Curve path
+          let curvePath = null
+          if (pts.length > 1) {
+            curvePath = new Path2D()
+            curvePath.moveTo(xOf(pts[0].t + cfg.shift), yOf(pts[0].v))
+            for (let i = 0; i < pts.length - 1; i++) {
+              const p = pts[i],
+                q = pts[i + 1]
+              const x1 = xOf(p.t + cfg.shift),
+                y1 = yOf(p.v)
+              const x2 = xOf(q.t + cfg.shift),
+                y2 = yOf(q.v)
+              if (p.s != null && q.s != null) {
+                const dt = q.t - p.t
+                const c1y = y1 - (p.s * hW * dt) / 3
+                const c2y = y2 + (q.s * hW * dt) / 3
+                const minY = Math.min(y1, y2) - 2,
+                  maxY = Math.max(y1, y2) + 2
+                if (c1y >= minY && c1y <= maxY && c2y >= minY && c2y <= maxY)
+                  curvePath.bezierCurveTo(
+                    x1 + (x2 - x1) / 3,
+                    c1y,
+                    x2 - (x2 - x1) / 3,
+                    c2y,
+                    x2,
+                    y2,
+                  )
+                else curvePath.lineTo(x2, y2)
+              } else curvePath.lineTo(x2, y2)
+            }
+          }
+
+          // Frequency gradient
+          if (
+            cfg.freqOn &&
+            cfg.opacity > 0 &&
+            curvePath &&
+            vizData.type === "hwl"
+          ) {
+            const areaPath = new Path2D(curvePath)
+            areaPath.lineTo(xOf(pts[pts.length - 1].t + cfg.shift), baseY)
+            areaPath.lineTo(xOf(pts[0].t + cfg.shift), baseY)
+            areaPath.closePath()
+            ctx.save()
+            ctx.clip(areaPath)
+            ctx.globalAlpha = cfg.opacity
+            const grad = ctx.createLinearGradient(ox, 0, ox + gw, 0)
+            const N = Math.max(16, Math.floor(gw / 4))
+            for (let i = 0; i <= N; i++) {
+              const tt = t - layL + (i / N) * span
+              const fv = freqValueAt(cfg.ch, tt - cfg.shift)
+              grad.addColorStop(i / N, freqColor(fv === null ? 0 : fv))
+            }
+            ctx.fillStyle = grad
+            ctx.fillRect(ox, 0, gw, h)
+            ctx.restore()
+          }
+
+          // Axis lines
+          const axisStyle = () => {
+            ctx.globalAlpha = 0.45
+            ctx.strokeStyle = "#ffffff"
+            ctx.lineWidth = 1
+          }
+          if (cfg.showBase) {
+            axisStyle()
+            ctx.beginPath()
+            ctx.moveTo(ox, baseY)
+            ctx.lineTo(ox + gw, baseY)
+            ctx.stroke()
+          }
+
+          // Curve
+          if (curvePath) {
+            ctx.globalAlpha = cfg.opacity
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.85)"
+            ctx.lineWidth = cfg.lineWidth + 1
+            ctx.stroke(curvePath)
+            ctx.strokeStyle = cfg.color
+            ctx.lineWidth = cfg.lineWidth
+            ctx.stroke(curvePath)
+          }
+
+          // Current time line
+          const xT = xOf(t)
+          axisStyle()
+          ctx.beginPath()
+          ctx.moveTo(xT, topPad - 4)
+          ctx.lineTo(xT, baseY)
+          ctx.stroke()
+
+          // Indicator dot
+          const val = vizValueAt(cfg.ch, t - cfg.shift)
+          if (val !== null) {
+            ctx.globalAlpha = 1
+            ctx.fillStyle = cfg.dotColor
+            ctx.beginPath()
+            ctx.arc(xT, yOf(val), viz.dotSize, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
+            ctx.lineWidth = 2
+            ctx.stroke()
+          }
+
+          // Channel label
+          ctx.globalAlpha = 0.9
+          ctx.fillStyle = cfg.color
+          ctx.font = "600 16px -apple-system, 'Segoe UI', Roboto, sans-serif"
+          ctx.fillText(cfg.label, ox + 4, topPad + 8)
+          ctx.globalAlpha = 1
+        }
+
+        function drawViz(t) {
+          const dpr = window.devicePixelRatio || 1
+          const w = vizCanvas.width / dpr,
+            h = vizCanvas.height / dpr
+          vizCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+          vizCtx.clearRect(0, 0, w, h)
+          const gap = viz.gap
+          const gw = (w - gap) / 2
+          const chans = []
+          if (viz.enabledA)
+            chans.push({
+              ch: 0,
+              label: "A",
+              color: viz.colorA,
+              opacity: viz.opacityA,
+              dotColor: viz.colorDotA,
+              lineWidth: viz.lineWidthA,
+              showBase: viz.showBaseA,
+              bgColor: viz.bgColorA,
+              bgOpacity: viz.bgOpacityA,
+              freqOn: viz.freqA,
+              shift: delayA,
+            })
+          if (viz.enabledB)
+            chans.push({
+              ch: 1,
+              label: "B",
+              color: viz.colorB,
+              opacity: viz.opacityB,
+              dotColor: viz.colorDotB,
+              lineWidth: viz.lineWidthB,
+              showBase: viz.showBaseB,
+              bgColor: viz.bgColorB,
+              bgOpacity: viz.bgOpacityB,
+              freqOn: viz.freqB,
+              shift: vizData.type === "hwl" ? delayB : 0,
+            })
+          chans.forEach((c, i) =>
+            drawVizChannel(vizCtx, i * (gw + gap), gw, h, t, c),
+          )
+        }
+
+        function layoutVizCanvas() {
+          const area = document.querySelector(".video-area")
+          if (!area) return
+          const show = vizData && (viz.enabledA || viz.enabledB)
+          const areaW = area.clientWidth
+          const w = Math.min((areaW * viz.width) / 100, areaW - 320)
+          if (!show || w < 240) {
+            vizCanvas.style.display = "none"
+            return
+          }
+          const h = viz.height,
+            dpr = window.devicePixelRatio || 1
+          vizCanvas.style.display = "block"
+          vizCanvas.style.width = w + "px"
+          vizCanvas.style.height = h + "px"
+          const pw = Math.round(w * dpr),
+            ph = Math.round(h * dpr)
+          if (vizCanvas.width !== pw || vizCanvas.height !== ph) {
+            vizCanvas.width = pw
+            vizCanvas.height = ph
+          }
+        }
+
+        function vizCurrentTime() {
+          const isSynced =
+            syncScriptCheck.checked && currentMediaType === "script"
+          const isActivity = isActivityTitle(state.player.title)
+          return isSynced
+            ? video.currentTime
+            : isActivity
+              ? 0
+              : state.player.position || 0
+        }
+
+        function vizLoop() {
+          requestAnimationFrame(vizLoop)
+          if (!vizData || !(viz.enabledA || viz.enabledB)) return
+          if (vizCanvas.style.display === "none") layoutVizCanvas()
+          if (vizCanvas.style.display === "none") return
+          drawViz(vizCurrentTime())
+        }
+        requestAnimationFrame(vizLoop)
+
+        // UI panels
+        const vizEls = {
+          enA: document.getElementById("viz-a-enable"),
+          baseA: document.getElementById("viz-a-base"),
+          opA: document.getElementById("viz-a-opacity"),
+          opAVal: document.getElementById("viz-a-op-val"),
+          colA: document.getElementById("viz-a-color"),
+          dotA: document.getElementById("viz-a-dot-color"),
+          lwA: document.getElementById("viz-a-linewidth"),
+          lwAVal: document.getElementById("viz-a-lw-val"),
+          bgColA: document.getElementById("viz-a-bg-color"),
+          bgOpA: document.getElementById("viz-a-bg-opacity"),
+          bgOpAVal: document.getElementById("viz-a-bg-op-val"),
+          enB: document.getElementById("viz-b-enable"),
+          baseB: document.getElementById("viz-b-base"),
+          opB: document.getElementById("viz-b-opacity"),
+          opBVal: document.getElementById("viz-b-op-val"),
+          colB: document.getElementById("viz-b-color"),
+          dotB: document.getElementById("viz-b-dot-color"),
+          lwB: document.getElementById("viz-b-linewidth"),
+          lwBVal: document.getElementById("viz-b-lw-val"),
+          bgColB: document.getElementById("viz-b-bg-color"),
+          bgOpB: document.getElementById("viz-b-bg-opacity"),
+          bgOpBVal: document.getElementById("viz-b-bg-op-val"),
+          winL: document.getElementById("viz-win-left"),
+          winLVal: document.getElementById("viz-win-left-val"),
+          winR: document.getElementById("viz-win-right"),
+          winRVal: document.getElementById("viz-win-right-val"),
+          height: document.getElementById("viz-height"),
+          heightVal: document.getElementById("viz-height-val"),
+          width: document.getElementById("viz-width"),
+          widthVal: document.getElementById("viz-width-val"),
+          gap: document.getElementById("viz-gap"),
+          gapVal: document.getElementById("viz-gap-val"),
+          dotSize: document.getElementById("viz-dot-size"),
+          dotSizeVal: document.getElementById("viz-dot-size-val"),
+          freqA: document.getElementById("viz-a-freq"),
+          freqB: document.getElementById("viz-b-freq"),
+        }
+        const f2 = (v) => (+v).toFixed(2),
+          f1 = (v) => (+v).toFixed(1),
+          f0 = (v) => String(Math.round(v))
+
+        function bindCheck(el, key, after) {
+          el.addEventListener("change", () => {
+            viz[key] = el.checked
+            saveViz()
+            if (after) after()
+          })
+        }
+        function bindRange(el, valEl, key, fmt, after) {
+          el.addEventListener("input", () => {
+            viz[key] = parseFloat(el.value)
+            if (valEl) valEl.textContent = fmt(viz[key])
+            saveViz()
+            if (after) after()
+          })
+        }
+        function bindColor(el, key) {
+          el.addEventListener("input", () => {
+            viz[key] = el.value
+            saveViz()
+          })
+        }
+
+        bindCheck(vizEls.enA, "enabledA", layoutVizCanvas)
+        bindCheck(vizEls.enB, "enabledB", layoutVizCanvas)
+        bindCheck(vizEls.baseA, "showBaseA")
+        bindCheck(vizEls.baseB, "showBaseB")
+        bindCheck(vizEls.freqA, "freqA")
+        bindCheck(vizEls.freqB, "freqB")
+        bindRange(vizEls.opA, vizEls.opAVal, "opacityA", f2)
+        bindRange(vizEls.opB, vizEls.opBVal, "opacityB", f2)
+        bindRange(vizEls.lwA, vizEls.lwAVal, "lineWidthA", f1)
+        bindRange(vizEls.lwB, vizEls.lwBVal, "lineWidthB", f1)
+        bindRange(vizEls.bgOpA, vizEls.bgOpAVal, "bgOpacityA", f2)
+        bindRange(vizEls.bgOpB, vizEls.bgOpBVal, "bgOpacityB", f2)
+        bindRange(vizEls.winL, vizEls.winLVal, "winLeft", f1)
+        bindRange(vizEls.winR, vizEls.winRVal, "winRight", f1)
+        bindRange(
+          vizEls.height,
+          vizEls.heightVal,
+          "height",
+          f0,
+          layoutVizCanvas,
+        )
+        bindRange(vizEls.width, vizEls.widthVal, "width", f0, layoutVizCanvas)
+        bindRange(vizEls.gap, vizEls.gapVal, "gap", f0)
+        bindRange(vizEls.dotSize, vizEls.dotSizeVal, "dotSize", f0)
+        bindColor(vizEls.colA, "colorA")
+        bindColor(vizEls.dotA, "colorDotA")
+        bindColor(vizEls.bgColA, "bgColorA")
+        bindColor(vizEls.colB, "colorB")
+        bindColor(vizEls.dotB, "colorDotB")
+        bindColor(vizEls.bgColB, "bgColorB")
+
+        function syncVizUI() {
+          vizEls.enA.checked = viz.enabledA
+          vizEls.enB.checked = viz.enabledB
+          vizEls.baseA.checked = viz.showBaseA
+          vizEls.baseB.checked = viz.showBaseB
+          vizEls.opA.value = viz.opacityA
+          vizEls.opAVal.textContent = f2(viz.opacityA)
+          vizEls.opB.value = viz.opacityB
+          vizEls.opBVal.textContent = f2(viz.opacityB)
+          vizEls.lwA.value = viz.lineWidthA
+          vizEls.lwAVal.textContent = f1(viz.lineWidthA)
+          vizEls.lwB.value = viz.lineWidthB
+          vizEls.lwBVal.textContent = f1(viz.lineWidthB)
+          vizEls.bgOpA.value = viz.bgOpacityA
+          vizEls.bgOpAVal.textContent = f2(viz.bgOpacityA)
+          vizEls.bgOpB.value = viz.bgOpacityB
+          vizEls.bgOpBVal.textContent = f2(viz.bgOpacityB)
+          vizEls.colA.value = viz.colorA
+          vizEls.dotA.value = viz.colorDotA
+          vizEls.bgColA.value = viz.bgColorA
+          vizEls.colB.value = viz.colorB
+          vizEls.dotB.value = viz.colorDotB
+          vizEls.bgColB.value = viz.bgColorB
+          vizEls.winL.value = viz.winLeft
+          vizEls.winLVal.textContent = f1(viz.winLeft)
+          vizEls.winR.value = viz.winRight
+          vizEls.winRVal.textContent = f1(viz.winRight)
+          vizEls.height.value = viz.height
+          vizEls.heightVal.textContent = f0(viz.height)
+          vizEls.width.value = viz.width
+          vizEls.widthVal.textContent = f0(viz.width)
+          vizEls.gap.value = viz.gap
+          vizEls.gapVal.textContent = f0(viz.gap)
+          vizEls.dotSize.value = viz.dotSize
+          vizEls.dotSizeVal.textContent = f0(viz.dotSize)
+          vizEls.freqA.checked = viz.freqA
+          vizEls.freqB.checked = viz.freqB
+          layoutVizCanvas()
+        }
+        syncVizUI()
+
+        // Hotkeys
+        document.addEventListener("keydown", (e) => {
+          const tag = e.target.tagName.toLowerCase()
+          if (tag === "input" || tag === "textarea" || tag === "select") return
+          if (e.repeat) return
+          const k = e.key.toLowerCase()
+          if (k === "q") {
+            viz.enabledA = !viz.enabledA
+            vizEls.enA.checked = viz.enabledA
+            saveViz()
+            layoutVizCanvas()
+          } else if (k === "e") {
+            viz.enabledB = !viz.enabledB
+            vizEls.enB.checked = viz.enabledB
+            saveViz()
+            layoutVizCanvas()
+          }
+        })
+
+        setFsIcon(false)
       })
     </script>
   </body>
