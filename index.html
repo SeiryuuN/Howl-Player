@@ -1284,6 +1284,7 @@
                 d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
               />
             </svg>
+            <span class="hotkey-label">F</span>
           </button>
         </div>
       </div>
@@ -1422,7 +1423,9 @@
                   flex-wrap: wrap;
                 "
               >
-                <button id="btn-mute" onclick="toggleMute(this)">Mute</button>
+                <button id="btn-mute" onclick="toggleMute(this)">
+                  Mute <span class="hotkey-label">M</span>
+                </button>
                 <button id="btn-swap" onclick="toggleSwap(this)">
                   Swap Channels
                 </button>
@@ -1645,7 +1648,7 @@
               id="resyncBtn"
               style="padding: 4px 10px; font-size: 12px; flex-shrink: 0"
             >
-              Manual sync
+              Manual sync <span class="hotkey-label">R</span>
             </button>
 
             <button
@@ -2195,14 +2198,16 @@
     <div class="bottom-bar" id="bottom-bar">
       <div class="bar-tabs">
         <button class="tab-btn active" data-target="panel-controls">
-          Controls
+          Controls <span class="hotkey-label">1</span>
         </button>
-        <button class="tab-btn" data-target="panel-activity">Activity</button>
+        <button class="tab-btn" data-target="panel-activity">
+          Activity <span class="hotkey-label">2</span>
+        </button>
         <button class="tab-btn" data-target="panel-visualizer">
-          Visualizer
+          Visualizer <span class="hotkey-label">3</span>
         </button>
         <button class="tab-btn" data-target="panel-connection">
-          Connection
+          Connection <span class="hotkey-label">4</span>
         </button>
       </div>
       <div class="conn-block">
@@ -3256,7 +3261,21 @@
               return
             }
 
-            if (next.videoFile) loadVideo(URL.createObjectURL(next.videoFile))
+            if (next.videoFile) {
+              loadVideo(URL.createObjectURL(next.videoFile))
+              const playPromise = video.play()
+              if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                  const onCanPlay = () => {
+                    video.play().catch(() => {})
+                    video.removeEventListener("canplay", onCanPlay)
+                  }
+                  video.addEventListener("canplay", onCanPlay)
+                })
+              }
+            }
+
+            state.player.playing = true
 
             let hasPlayableScript = false
 
@@ -3276,7 +3295,13 @@
                   )
                   state = await client.getStatus()
                   updateUI()
-                  client.startPlayer().catch(() => {})
+                  try {
+                    await client.seek(video.currentTime)
+                    await client.startPlayer()
+                  } catch (err) {
+                    console.error("Queue advance start error:", err)
+                    client.startPlayer().catch(() => {})
+                  }
                 } else {
                   const blob = new Blob([next._hwlBuffer], {
                     type: "application/octet-stream",
@@ -3308,7 +3333,14 @@
                       "funscript",
                     )
 
-                  sendScript(scriptBuffer)
+                  await sendScript(scriptBuffer)
+                  try {
+                    await client.seek(video.currentTime)
+                    await client.startPlayer()
+                  } catch (err) {
+                    console.error("Queue advance start error:", err)
+                    client.startPlayer().catch(() => {})
+                  }
                 } else {
                   updateUI()
                 }
@@ -3316,19 +3348,6 @@
             } else {
               scriptBuffer = {}
               updateUI()
-            }
-
-            if (next.videoFile && video.paused) {
-              const playPromise = video.play()
-              if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                  const onCanPlay = () => {
-                    video.play().catch(() => {})
-                    video.removeEventListener("canplay", onCanPlay)
-                  }
-                  video.addEventListener("canplay", onCanPlay)
-                })
-              }
             }
 
             renderQueue()
@@ -3539,6 +3558,22 @@
                     return
                   }
 
+                  if (next.videoFile) {
+                    loadVideo(URL.createObjectURL(next.videoFile))
+                    const playPromise = video.play()
+                    if (playPromise !== undefined) {
+                      playPromise.catch(() => {
+                        const onCanPlay = () => {
+                          video.play().catch(() => {})
+                          video.removeEventListener("canplay", onCanPlay)
+                        }
+                        video.addEventListener("canplay", onCanPlay)
+                      })
+                    }
+                  }
+
+                  state.player.playing = true
+
                   if (!next.conversionError) {
                     if (next._hwlBuffer) {
                       hasPlayableScript = true
@@ -3554,7 +3589,13 @@
                         )
                         state = await client.getStatus()
                         updateUI()
-                        client.startPlayer().catch(() => {})
+                        try {
+                          await client.seek(video.currentTime)
+                          await client.startPlayer()
+                        } catch (err) {
+                          console.error("Queue play start error:", err)
+                          client.startPlayer().catch(() => {})
+                        }
                       } else {
                         const blob = new Blob([next._hwlBuffer], {
                           type: "application/octet-stream",
@@ -3585,7 +3626,14 @@
                             await readFileAsText(next.scriptFile),
                             "funscript",
                           )
-                        sendScript(scriptBuffer)
+                        await sendScript(scriptBuffer)
+                        try {
+                          await client.seek(video.currentTime)
+                          await client.startPlayer()
+                        } catch (err) {
+                          console.error("Queue play start error:", err)
+                          client.startPlayer().catch(() => {})
+                        }
                       } else {
                         updateUI()
                       }
@@ -3593,22 +3641,6 @@
                   } else {
                     scriptBuffer = {}
                     updateUI()
-                  }
-
-                  if (next.videoFile) {
-                    loadVideo(URL.createObjectURL(next.videoFile))
-                    if (video.paused) {
-                      const playPromise = video.play()
-                      if (playPromise !== undefined) {
-                        playPromise.catch(() => {
-                          const onCanPlay = () => {
-                            video.play().catch(() => {})
-                            video.removeEventListener("canplay", onCanPlay)
-                          }
-                          video.addEventListener("canplay", onCanPlay)
-                        })
-                      }
-                    }
                   }
 
                   renderQueue()
@@ -4089,14 +4121,7 @@
             if (isVideoPlaying && isScriptPlaying) {
               const drift = Math.abs(videoTime - state.player.position)
               if (drift > 0.5) {
-                video.pause()
-                await client.stopPlayer()
-
                 await client.seek(videoTime)
-                await new Promise((resolve) => setTimeout(resolve, 50))
-
-                video.play().catch(() => {})
-                await client.startPlayer()
                 lastSyncedVideoTime = videoTime
               }
             }
@@ -4203,15 +4228,17 @@
         })
 
         video.addEventListener("play", () => {
-          if (
-            syncScriptCheck.checked &&
-            state.player.title &&
-            !state.player.playing
-          ) {
+          if (syncScriptCheck.checked && state.player.title) {
+            const wasPlaying = state.player.playing
+            state.player.playing = true
+
             client
               .seek(video.currentTime)
               .then(() => client.startPlayer())
-              .catch((err) => console.error("Play sync error:", err))
+              .catch((err) => {
+                state.player.playing = wasPlaying
+                console.error("Play sync error:", err)
+              })
           }
         })
 
@@ -4228,13 +4255,33 @@
           }
 
           if (state.player.playing) {
-            handleApiCall(client.stopPlayer())
+            // PAUSE
+            state.player.playing = false
+            video.pause()
+            handleApiCall(
+              client.stopPlayer().catch((err) => {
+                state.player.playing = true
+              }),
+            )
           } else {
+            // PLAY
+            state.player.playing = true
+
             if (syncScriptCheck.checked) {
+              const playPromise = video.play()
+              if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                  video.addEventListener(
+                    "canplay",
+                    () => video.play().catch(() => {}),
+                    { once: true },
+                  )
+                })
+              }
+
               try {
                 await client.seek(video.currentTime)
                 await client.startPlayer()
-                if (video.paused) video.play().catch(() => {})
               } catch (err) {
                 console.error("Play sync error:", err)
                 handleApiCall(client.startPlayer())
@@ -5080,42 +5127,6 @@
           })
         })
 
-        document.addEventListener("keydown", (e) => {
-          // Skip if typing in an input field
-          const tag = e.target.tagName.toLowerCase()
-          if (tag === "input" || tag === "textarea" || tag === "select") return
-
-          if (!isConnected) return
-
-          switch (e.key.toLowerCase()) {
-            case "w":
-              if (e.repeat) return
-              e.preventDefault()
-              window.incrementPower(0)
-              showPowerPopup()
-              break
-
-            case "d":
-              if (e.repeat) return
-              e.preventDefault()
-              window.incrementPower(1)
-              showPowerPopup()
-              break
-
-            case "s":
-              e.preventDefault()
-              window.decrementPower(0)
-              showPowerPopup()
-              break
-
-            case "a":
-              e.preventDefault()
-              window.decrementPower(1)
-              showPowerPopup()
-              break
-          }
-        })
-
         // --- fullscreen handler ---
         const fsBtn = document.getElementById("fs-btn")
         let fsIdleTimer = null
@@ -5125,7 +5136,9 @@
         const FS_ICON_EXIT = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`
 
         function setFsIcon(fs) {
-          fsBtn.innerHTML = fs ? FS_ICON_EXIT : FS_ICON_ENTER
+          fsBtn.innerHTML =
+            (fs ? FS_ICON_EXIT : FS_ICON_ENTER) +
+            '<span class="hotkey-label">F</span>'
         }
 
         function toggleFullscreen() {
@@ -5164,18 +5177,43 @@
         document.addEventListener("mousemove", () => {
           if (document.fullscreenElement) armFsIdle()
         })
+
+        function clearVideoUiFocus() {
+          if (!document.fullscreenElement) return
+
+          const doBlur = () => {
+            const el = document.activeElement
+            if (
+              el &&
+              el !== document.body &&
+              el !== document.documentElement &&
+              !["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)
+            ) {
+              el.blur()
+            }
+
+            if (document.activeElement === video) {
+              video.blur()
+            }
+          }
+          requestAnimationFrame(doBlur)
+          setTimeout(doBlur, 0)
+          setTimeout(doBlur, 120)
+        }
+
+        video.addEventListener("pointerup", clearVideoUiFocus, true)
+        video.addEventListener("click", clearVideoUiFocus, true)
+
+        video.addEventListener("play", clearVideoUiFocus)
+        video.addEventListener("pause", clearVideoUiFocus)
+
+        video.addEventListener("seeked", clearVideoUiFocus)
+        video.addEventListener("volumechange", clearVideoUiFocus)
+        video.addEventListener("ratechange", clearVideoUiFocus)
+
         video.addEventListener("play", armFsIdle)
         video.addEventListener("pause", armFsIdle)
         video.addEventListener("ended", armFsIdle)
-
-        document.addEventListener("keydown", (e) => {
-          const tag = e.target.tagName.toLowerCase()
-          if (tag === "input" || tag === "textarea" || tag === "select") return
-          if (e.key.toLowerCase() === "f" && !e.repeat) {
-            e.preventDefault()
-            toggleFullscreen()
-          }
-        })
 
         document.addEventListener("fullscreenchange", () => {
           const fs = !!document.fullscreenElement
@@ -5273,36 +5311,53 @@
               }
             } else {
               const data = JSON.parse(originalScriptBuffer)
+
               if (!data.actions || data.actions.length < 2) return
+
               const pts = data.actions
                 .map((a) => ({ t: a.at / 1000, v: a.pos / 100 }))
+                .sort((a, b) => a.t - b.t)
                 .filter((p, i, arr) => i === 0 || p.t > arr[i - 1].t)
+
               if (pts.length < 2) return
+
               const n = pts.length
-              const m = new Float64Array(n - 1),
-                sl = new Float64Array(n)
-              for (let i = 0; i < n - 1; i++)
-                m[i] =
-                  pts[i + 1].t > pts[i].t
-                    ? (pts[i + 1].v - pts[i].v) / (pts[i + 1].t - pts[i].t)
-                    : 0
-              sl[0] = m[0]
-              for (let i = 1; i < n - 1; i++)
-                sl[i] =
-                  m[i - 1] * m[i] <= 0
-                    ? 0
-                    : (pts[i + 1].t - pts[i - 1].t) /
-                      ((pts[i].t - pts[i - 1].t) / m[i - 1] +
-                        (pts[i + 1].t - pts[i].t) / m[i])
-              sl[n - 1] = m[n - 2]
-              for (let i = 0; i < n - 1; i++) {
-                const dt = pts[i + 1].t - pts[i].t
-                if (!dt) continue
-                const maxT = 3 * Math.abs(m[i])
-                sl[i] = Math.sign(sl[i]) * Math.min(Math.abs(sl[i]), maxT)
-                sl[i + 1] =
-                  Math.sign(sl[i + 1]) * Math.min(Math.abs(sl[i + 1]), maxT)
+              const sl = new Float64Array(n)
+
+              const intervalSlope = (i, j) => {
+                const dt = pts[j].t - pts[i].t
+                if (dt <= 0) return 0
+                return (pts[j].v - pts[i].v) / dt
               }
+
+              sl[0] = intervalSlope(0, 1)
+              sl[n - 1] = intervalSlope(n - 2, n - 1)
+
+              for (let i = 1; i < n - 1; i++) {
+                const h0 = pts[i].t - pts[i - 1].t
+                const h1 = pts[i + 1].t - pts[i].t
+
+                if (h0 <= 0 || h1 <= 0) {
+                  sl[i] = 0
+                  continue
+                }
+
+                const s0 = (pts[i].v - pts[i - 1].v) / h0
+                const s1 = (pts[i + 1].v - pts[i].v) / h1
+
+                if (s0 === 0 || s1 === 0 || Math.sign(s0) !== Math.sign(s1)) {
+                  sl[i] = 0
+                } else {
+                  const p = (h0 * s1 + h1 * s0) / (h0 + h1)
+                  const limit = Math.min(
+                    Math.abs(s0),
+                    Math.abs(s1),
+                    0.5 * Math.abs(p),
+                  )
+                  sl[i] = Math.sign(p) * limit
+                }
+              }
+
               vizData = {
                 type: "funscript",
                 pts,
@@ -5315,8 +5370,76 @@
           }
         }
 
+        function funscriptCubicValue(p0, p1, s0, s1, t) {
+          const h = p1.t - p0.t
+
+          if (h <= 0) return p0.v
+
+          let u = (t - p0.t) / h
+
+          if (u <= 0) return p0.v
+          if (u >= 1) return p1.v
+
+          const u2 = u * u
+          const u3 = u2 * u
+
+          const h00 = 2 * u3 - 3 * u2 + 1
+          const h10 = u3 - 2 * u2 + u
+          const h01 = -2 * u3 + 3 * u2
+          const h11 = u3 - u2
+
+          return h00 * p0.v + h10 * h * s0 + h01 * p1.v + h11 * h * s1
+        }
+
+        function funscriptSlopeAt(t) {
+          if (!vizData || vizData.type !== "funscript") return 0
+
+          const pts = vizData.pts
+          const sl = vizData.slopes
+
+          if (!pts || !sl || pts.length === 0) return 0
+
+          if (t <= pts[0].t) return sl[0]
+          if (t >= pts[pts.length - 1].t) return sl[pts.length - 1]
+
+          let lo = 0,
+            hi = pts.length - 1
+
+          while (hi - lo > 1) {
+            const mid = (lo + hi) >> 1
+            if (pts[mid].t <= t) lo = mid
+            else hi = mid
+          }
+
+          const p0 = pts[lo]
+          const p1 = pts[hi]
+
+          const h = p1.t - p0.t
+
+          if (h <= 0) return 0
+
+          const s0 = sl[lo]
+          const s1 = sl[hi]
+
+          let u = (t - p0.t) / h
+
+          if (u <= 0) return s0
+          if (u >= 1) return s1
+
+          const u2 = u * u
+
+          const dvdu =
+            (6 * u2 - 6 * u) * p0.v +
+            (3 * u2 - 4 * u + 1) * h * s0 +
+            (-6 * u2 + 6 * u) * p1.v +
+            (3 * u2 - 2 * u) * h * s1
+
+          return dvdu / h
+        }
+
         function vizValueAt(ch, t) {
           if (!vizData || t < 0 || t > vizData.duration) return null
+
           if (vizData.type === "hwl") {
             const arr = ch === 0 ? vizData.ampA : vizData.ampB
             const idx = t / vizData.dt
@@ -5325,20 +5448,37 @@
             const f = idx - i0
             return arr[i0] + (arr[i1] - arr[i0]) * f
           }
+
           const pts = vizData.pts
+
+          if (!pts || pts.length === 0) return null
+
           if (t <= pts[0].t) return pts[0].v
           if (t >= pts[pts.length - 1].t) return pts[pts.length - 1].v
+
           let lo = 0,
             hi = pts.length - 1
+
           while (hi - lo > 1) {
             const mid = (lo + hi) >> 1
             if (pts[mid].t <= t) lo = mid
             else hi = mid
           }
-          const a = pts[lo],
-            b = pts[hi]
-          const f = (t - a.t) / (b.t - a.t || 1)
-          return a.v + (b.v - a.v) * f
+
+          const p0 = pts[lo]
+          const p1 = pts[hi]
+
+          if (!vizData.slopes || p1.t <= p0.t) {
+            return p0.v
+          }
+
+          return funscriptCubicValue(
+            p0,
+            p1,
+            vizData.slopes[lo],
+            vizData.slopes[hi],
+            t,
+          )
         }
 
         function freqValueAt(ch, t) {
@@ -5399,7 +5539,7 @@
                 if (pts[mid].t < a) lo = mid
                 else hi = mid
               }
-              res.push({ t: a, v: vizValueAt(ch, a), s: sl[lo] })
+              res.push({ t: a, v: vizValueAt(ch, a), s: funscriptSlopeAt(a) })
             }
             let lo = 0,
               hi = pts.length - 1
@@ -5415,7 +5555,7 @@
             )
               res.push({ t: pts[i].t, v: pts[i].v, s: sl[i] })
             if (t1 < vizData.duration && b < pts[pts.length - 1].t)
-              res.push({ t: b, v: vizValueAt(ch, b), s: sl[hi] })
+              res.push({ t: b, v: vizValueAt(ch, b), s: funscriptSlopeAt(b) })
           }
           return res
         }
@@ -5461,19 +5601,18 @@
                 const dt = q.t - p.t
                 const c1y = y1 - (p.s * hW * dt) / 3
                 const c2y = y2 + (q.s * hW * dt) / 3
-                const minY = Math.min(y1, y2) - 2,
-                  maxY = Math.max(y1, y2) + 2
-                if (c1y >= minY && c1y <= maxY && c2y >= minY && c2y <= maxY)
-                  curvePath.bezierCurveTo(
-                    x1 + (x2 - x1) / 3,
-                    c1y,
-                    x2 - (x2 - x1) / 3,
-                    c2y,
-                    x2,
-                    y2,
-                  )
-                else curvePath.lineTo(x2, y2)
-              } else curvePath.lineTo(x2, y2)
+
+                curvePath.bezierCurveTo(
+                  x1 + (x2 - x1) / 3,
+                  c1y,
+                  x2 - (x2 - x1) / 3,
+                  c2y,
+                  x2,
+                  y2,
+                )
+              } else {
+                curvePath.lineTo(x2, y2)
+              }
             }
           }
 
@@ -5780,23 +5919,217 @@
         syncVizUI()
 
         // Hotkeys
-        document.addEventListener("keydown", (e) => {
-          const tag = e.target.tagName.toLowerCase()
-          if (tag === "input" || tag === "textarea" || tag === "select") return
-          if (e.repeat) return
-          const k = e.key.toLowerCase()
-          if (k === "q") {
-            viz.enabledA = !viz.enabledA
-            vizEls.enA.checked = viz.enabledA
-            saveViz()
-            layoutVizCanvas()
-          } else if (k === "e") {
-            viz.enabledB = !viz.enabledB
-            vizEls.enB.checked = viz.enabledB
-            saveViz()
-            layoutVizCanvas()
+
+        function isTextEditable(el) {
+          if (!el || !(el instanceof Element)) return false
+
+          const tag = el.tagName
+
+          if (tag === "TEXTAREA" || tag === "SELECT") return true
+
+          if (tag === "INPUT") {
+            const type = String(el.type || "").toLowerCase()
+
+            return [
+              "text",
+              "search",
+              "url",
+              "email",
+              "password",
+              "number",
+              "date",
+              "time",
+              "datetime-local",
+              "month",
+              "week",
+            ].includes(type)
           }
-        })
+
+          return Boolean(el.isContentEditable)
+        }
+
+        function blurActiveControlForHotkeys() {
+          const el = document.activeElement
+
+          if (!el || el === document.body || el === document.documentElement) {
+            return
+          }
+
+          if (isTextEditable(el)) return
+
+          el.blur()
+        }
+
+        function togglePlayPauseHotkey() {
+          if (!isConnected) return
+
+          if (
+            syncScriptCheck.checked &&
+            currentMediaType === "script" &&
+            state.player.title
+          ) {
+            if (video.paused) {
+              video.play().catch(() => {})
+            } else {
+              video.pause()
+            }
+
+            return
+          }
+
+          if (state.player.playing) {
+            state.player.playing = false
+            client.stopPlayer().catch(() => {})
+          } else {
+            state.player.playing = true
+            client.startPlayer().catch(() => {})
+          }
+        }
+
+        document.addEventListener(
+          "keydown",
+          (e) => {
+            if (isTextEditable(e.target)) return
+
+            const code = e.code
+
+            const isPowerKey =
+              code === "KeyW" ||
+              code === "KeyD" ||
+              code === "KeyS" ||
+              code === "KeyA"
+
+            const isVizKey = code === "KeyQ" || code === "KeyE"
+
+            const isFullscreenKey = code === "KeyF"
+
+            const isResyncKey = code === "KeyR"
+
+            const isMuteKey = code === "KeyM"
+
+            const isPlayPauseKey = code === "Space"
+            const isTabKey =
+              code === "Digit1" ||
+              code === "Digit2" ||
+              code === "Digit3" ||
+              code === "Digit4" ||
+              code === "Numpad1" ||
+              code === "Numpad2" ||
+              code === "Numpad3" ||
+              code === "Numpad4"
+            const isAppHotkey =
+              isPowerKey ||
+              isVizKey ||
+              isFullscreenKey ||
+              isResyncKey ||
+              isMuteKey ||
+              isPlayPauseKey ||
+              isTabKey
+            if (!isAppHotkey) return
+            blurActiveControlForHotkeys()
+
+            // Power
+            if (isPowerKey) {
+              if (!isConnected || e.repeat) return
+
+              e.preventDefault()
+
+              switch (code) {
+                case "KeyW":
+                  window.incrementPower(0)
+                  break
+
+                case "KeyD":
+                  window.incrementPower(1)
+                  break
+
+                case "KeyS":
+                  window.decrementPower(0)
+                  break
+
+                case "KeyA":
+                  window.decrementPower(1)
+                  break
+              }
+
+              showPowerPopup()
+              return
+            }
+
+            // Visualizer
+            if (isVizKey && !e.repeat) {
+              e.preventDefault()
+
+              if (code === "KeyQ") {
+                viz.enabledA = !viz.enabledA
+                vizEls.enA.checked = viz.enabledA
+                saveViz()
+                layoutVizCanvas()
+              } else if (code === "KeyE") {
+                viz.enabledB = !viz.enabledB
+                vizEls.enB.checked = viz.enabledB
+                saveViz()
+                layoutVizCanvas()
+              }
+
+              return
+            }
+
+            // Fullscreen
+            if (isFullscreenKey && !e.repeat) {
+              e.preventDefault()
+              toggleFullscreen()
+              return
+            }
+
+            // Resync
+            if (isResyncKey && !e.repeat) {
+              if (
+                isConnected &&
+                syncScriptCheck.checked &&
+                state.player.title
+              ) {
+                e.preventDefault()
+                videoSync(true)
+              }
+
+              return
+            }
+
+            // Mute
+            if (isMuteKey && !e.repeat) {
+              if (
+                isConnected &&
+                typeof btnMute !== "undefined" &&
+                !btnMute.disabled
+              ) {
+                e.preventDefault()
+                btnMute.click()
+              }
+
+              return
+            }
+
+            // Play/Pause
+            if (isPlayPauseKey && !e.repeat) {
+              e.preventDefault()
+              togglePlayPauseHotkey()
+              return
+            }
+
+            // Panels
+            if (isTabKey && !e.repeat) {
+              e.preventDefault()
+              const num = code.startsWith("Numpad")
+                ? parseInt(code.slice(6), 10)
+                : parseInt(code.slice(5), 10)
+              const tabs = document.querySelectorAll(".tab-btn")
+              if (tabs[num - 1]) tabs[num - 1].click()
+              return
+            }
+          },
+          true,
+        )
 
         setFsIcon(false)
       })
