@@ -9,4 +9,5 @@ Added MP3 to HWL conversion and delay sliders
 Added frequency slider. Frequency values are stored locally and sent to Howl app on connect. Improved reconnect logic
 
 Added script visualizer overlay and hotkeys
+
 Added heatmap. More hotkeys
