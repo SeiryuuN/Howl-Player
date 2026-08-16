@@ -93,6 +93,11 @@
         overflow: auto;
         background: #000;
       }
+      .video-area,
+      .queue-container {
+        scrollbar-width: thin;
+        scrollbar-color: #444 #0d0d0d;
+      }
 
       .video-inner {
         min-width: 100%;
@@ -1228,12 +1233,24 @@
         pointer-events: none;
         transition: opacity 0.6s ease;
       }
+      body:fullscreen .video-area {
+        overflow: hidden;
+      }
+      body:fullscreen .video-inner {
+        display: block;
+        height: 100%;
+      }
+      body:fullscreen .video-shell {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
       body:fullscreen #mainVideo {
-        width: 100% !important;
-        height: 100% !important;
+        width: 100vw !important;
+        height: 100vh !important;
         max-width: none !important;
         max-height: none !important;
-        object-fit: contain;
+        object-fit: cover;
       }
 
       /* ===== VISUALIZER OVERLAY ===== */
@@ -1254,38 +1271,308 @@
         border-radius: 4px;
         cursor: pointer;
       }
+
+      /* ===== CUSTOM VIDEO CONTROLS ===== */
+      .video-shell {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
+      }
+
+      .custom-controls {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 6;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 16px 10px 8px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.78),
+          rgba(0, 0, 0, 0.35) 60%,
+          transparent
+        );
+        transition: opacity 0.25s ease;
+      }
+      body:fullscreen.fs-idle .custom-controls {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .cc-progress-wrap {
+        position: relative;
+        padding: 4px 0;
+        cursor: pointer;
+      }
+      .cc-progress-track {
+        position: relative;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.22);
+        overflow: visible;
+        transition: height 0.22s ease;
+      }
+      .custom-controls.heatmap-on .cc-progress-track {
+        height: 26px;
+        border-radius: 4px;
+      }
+      .cc-heatmap {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 3px;
+        display: none;
+      }
+      .custom-controls.heatmap-on .cc-heatmap {
+        display: block;
+        border-radius: 4px;
+      }
+      .cc-progress-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0%;
+        background: rgba(0, 120, 212, 0.35);
+        border-radius: inherit;
+        pointer-events: none;
+      }
+      .custom-controls.heatmap-on .cc-progress-fill {
+        background: rgba(255, 255, 255, 0.18);
+      }
+      .cc-progress-thumb {
+        position: absolute;
+        top: 50%;
+        left: 0%;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: #fff;
+        transform: translate(-50%, -50%);
+        box-shadow:
+          0 0 0 2px rgba(0, 0, 0, 0.85),
+          0 1px 4px rgba(0, 0, 0, 0.7);
+        pointer-events: none;
+        z-index: 3;
+      }
+      .cc-tooltip {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        transform: translateX(-50%);
+        background: #000;
+        color: #fff;
+        font-size: 11px;
+        line-height: 1;
+        padding: 3px 6px;
+        border-radius: 3px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .cc-tooltip.show {
+        opacity: 1;
+      }
+
+      .cc-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .cc-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+        min-width: 0;
+      }
+      .cc-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .cc-btn {
+        width: 30px;
+        height: 26px;
+        padding: 0;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        color: #fff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .cc-btn:hover {
+        background: rgba(255, 255, 255, 0.16);
+      }
+      .cc-btn svg {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
+        display: block;
+      }
+      .cc-btn.active {
+        color: var(--accent);
+      }
+      .cc-time {
+        color: #fff;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        margin-left: 2px;
+      }
+      .cc-volume {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 70px;
+        height: 14px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .cc-volume::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 2px;
+        background: linear-gradient(
+          to right,
+          #ffffff var(--vol-fill, 0%),
+          rgba(255, 255, 255, 0.3) var(--vol-fill, 0%)
+        );
+      }
+      .cc-volume::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        border: none;
+        margin-top: -4px;
+        box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.75);
+      }
+      .cc-volume::-moz-range-track {
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.3);
+      }
+      .cc-volume::-moz-range-progress {
+        height: 4px;
+        border-radius: 2px;
+        background: #fff;
+      }
+      .cc-volume::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        border: none;
+        box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.75);
+      }
+
+      .video-shell.controls-idle .custom-controls {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+      .video-shell .custom-controls {
+        transition: opacity 0.25s ease;
+      }
+
+      .cc-rest-markers {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        border-radius: inherit;
+      }
+      .custom-controls.heatmap-on .cc-rest-markers {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <div class="app-container tabs-closed" id="app">
       <div class="video-area">
         <div class="video-inner" style="position: relative">
-          <video
-            id="mainVideo"
-            controls
-            playsinline
-            controlsList="nofullscreen"
-          ></video>
-          <div id="power-popup" class="power-popup">
-            <div class="power-popup-group">
-              <span class="power-popup-label">A</span>
-              <span id="popup-val-a" class="power-popup-val">0</span>
+          <div class="video-shell" id="video-shell">
+            <video id="mainVideo" playsinline></video>
+
+            <!-- CUSTOM CONTROLS -->
+            <div class="custom-controls" id="custom-controls">
+              <div class="cc-progress-wrap" id="cc-progress-wrap">
+                <div class="cc-progress-track" id="cc-progress-track">
+                  <canvas class="cc-heatmap" id="cc-heatmap"></canvas>
+                  <canvas class="cc-rest-markers" id="cc-rest-markers"></canvas>
+                  <div class="cc-progress-fill" id="cc-progress-fill"></div>
+                  <div class="cc-progress-thumb" id="cc-progress-thumb"></div>
+                </div>
+                <div class="cc-tooltip" id="cc-tooltip"></div>
+              </div>
+              <div class="cc-row">
+                <div class="cc-left">
+                  <button
+                    class="cc-btn"
+                    id="cc-play"
+                    title="Play (Space)"
+                  ></button>
+                  <span class="cc-time" id="cc-time">0:00 / 0:00</span>
+                  <button
+                    class="cc-btn"
+                    id="cc-prev"
+                    title="Previous part (←)"
+                  ></button>
+                  <button
+                    class="cc-btn"
+                    id="cc-next"
+                    title="Next part (→)"
+                  ></button>
+                </div>
+                <div class="cc-right">
+                  <input
+                    type="range"
+                    class="cc-volume"
+                    id="cc-volume"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="1"
+                  />
+                  <button class="cc-btn" id="cc-mute" title="Mute (M)"></button>
+                  <button
+                    class="cc-btn"
+                    id="cc-heatmap-btn"
+                    title="Intensity heatmap"
+                  ></button>
+                  <button
+                    class="cc-btn"
+                    id="cc-fs"
+                    title="Fullscreen (F)"
+                  ></button>
+                </div>
+              </div>
             </div>
-            <span class="power-popup-separator">|</span>
-            <div class="power-popup-group">
-              <span class="power-popup-label">B</span>
-              <span id="popup-val-b" class="power-popup-val">0</span>
+            <div id="power-popup" class="power-popup">
+              <div class="power-popup-group">
+                <span class="power-popup-label">A</span>
+                <span id="popup-val-a" class="power-popup-val">0</span>
+              </div>
+              <span class="power-popup-separator">|</span>
+              <div class="power-popup-group">
+                <span class="power-popup-label">B</span>
+                <span id="popup-val-b" class="power-popup-val">0</span>
+              </div>
             </div>
+            <canvas id="viz-canvas" class="viz-canvas"></canvas>
           </div>
-          <canvas id="viz-canvas" class="viz-canvas"></canvas>
-          <button id="fs-btn" class="fs-btn" title="Fullscreen (F)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
-              />
-            </svg>
-            <span class="hotkey-label">F</span>
-          </button>
         </div>
       </div>
     </div>
@@ -2694,6 +2981,8 @@
         window.addEventListener("resize", () => {
           if (fitActive) doFit()
           layoutVizCanvas()
+          renderRestMarkers()
+          if (heatmapOn) renderHeatmap()
         })
 
         video.addEventListener("loadedmetadata", () => {
@@ -3096,6 +3385,7 @@
         let queueHideTimeout
         let isMouseOnQueuePanel = false
         let isQueueTempShow = false
+        let queueAdvancing = false
 
         applyQueuePanelState()
         setupQueueEvents()
@@ -3211,6 +3501,7 @@
             vidQueue.push(item)
           })
 
+          resyncActiveQueue()
           renderQueue()
         }
 
@@ -3233,132 +3524,147 @@
         }
 
         async function advanceQueue() {
-          if (
-            activeQueue.length > 0 &&
-            activeQueueIndex < activeQueue.length - 1
-          ) {
-            activeQueueIndex++
-            const next = activeQueue[activeQueueIndex]
-            if (!next) return
+          if (queueAdvancing) return
+          queueAdvancing = true
 
-            if (next.converting) {
-              video.pause()
-              showConversionPopup("Preparing next item...")
-              try {
-                await next.conversionPromise
-              } catch (e) {}
-              hideConversionPopup()
-            }
+          try {
+            if (
+              activeQueue.length > 0 &&
+              activeQueueIndex < activeQueue.length - 1
+            ) {
+              activeQueueIndex++
+              const next = activeQueue[activeQueueIndex]
+              if (!next) return
 
-            if (activeQueue[activeQueueIndex] !== next) return
-
-            if (next.conversionError && !next.videoFile) {
-              showError(
-                `Conversion failed for ${next.scriptName}: ${next.conversionError}`,
-              )
-              activeQueue.splice(activeQueueIndex, 1)
-              renderQueue()
-              return
-            }
-
-            if (next.videoFile) {
-              loadVideo(URL.createObjectURL(next.videoFile))
-              const playPromise = video.play()
-              if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                  const onCanPlay = () => {
-                    video.play().catch(() => {})
-                    video.removeEventListener("canplay", onCanPlay)
-                  }
-                  video.addEventListener("canplay", onCanPlay)
-                })
+              if (next.converting) {
+                video.pause()
+                showConversionPopup("Preparing next item...")
+                try {
+                  await next.conversionPromise
+                } catch (e) {}
+                hideConversionPopup()
               }
-            }
 
-            state.player.playing = true
+              if (activeQueue[activeQueueIndex] !== next) return
 
-            let hasPlayableScript = false
+              if (next.conversionError && !next.videoFile) {
+                showError(
+                  `Conversion failed for ${next.scriptName}: ${next.conversionError}`,
+                )
+                activeQueue.splice(activeQueueIndex, 1)
+                renderQueue()
+                return
+              }
 
-            if (!next.conversionError) {
-              if (next._hwlBuffer) {
-                hasPlayableScript = true
-                if (isConnected) {
-                  const title = (next.scriptName || "script").replace(
-                    /\.[^.]+$/,
-                    "",
-                  )
-                  setOriginalScript(next._hwlBuffer, "hwl")
-
-                  await client.loadHwl(
-                    title,
-                    arrayBufferToBase64(getModifiedScriptData()),
-                  )
-                  state = await client.getStatus()
-                  updateUI()
-                  try {
-                    await client.seek(video.currentTime)
-                    await client.startPlayer()
-                  } catch (err) {
-                    console.error("Queue advance start error:", err)
-                    client.startPlayer().catch(() => {})
-                  }
-                } else {
-                  const blob = new Blob([next._hwlBuffer], {
-                    type: "application/octet-stream",
+              if (next.videoFile) {
+                loadVideo(URL.createObjectURL(next.videoFile))
+                const playPromise = video.play()
+                if (playPromise !== undefined) {
+                  playPromise.catch(() => {
+                    const onCanPlay = () => {
+                      video.play().catch(() => {})
+                      video.removeEventListener("canplay", onCanPlay)
+                    }
+                    video.addEventListener("canplay", onCanPlay)
                   })
-                  const hwlFile = new File(
-                    [blob],
-                    next.scriptName || "script.mp3",
-                    { type: "application/octet-stream" },
-                  )
-                  hwlFile.isConvertedHwl = true
-                  scriptBuffer = hwlFile
-                  updateUI()
-                }
-              } else if (next.scriptFile) {
-                hasPlayableScript = true
-                scriptBuffer = next.scriptFile
-                if (isConnected) {
-                  let qExt = next.scriptFile.name.substring(
-                    next.scriptFile.name.lastIndexOf(".") + 1,
-                  )
-                  if (qExt === "hwl")
-                    setOriginalScript(
-                      await readFileAsArrayBuffer(next.scriptFile),
-                      "hwl",
-                    )
-                  else if (qExt === "funscript")
-                    setOriginalScript(
-                      await readFileAsText(next.scriptFile),
-                      "funscript",
-                    )
-
-                  await sendScript(scriptBuffer)
-                  try {
-                    await client.seek(video.currentTime)
-                    await client.startPlayer()
-                  } catch (err) {
-                    console.error("Queue advance start error:", err)
-                    client.startPlayer().catch(() => {})
-                  }
-                } else {
-                  updateUI()
                 }
               }
-            } else {
-              scriptBuffer = {}
-              updateUI()
-            }
 
-            renderQueue()
-            setTimeout(updateUI, 150)
-          } else if (activeQueue.length > 0) {
+              state.player.playing = true
+              let hasPlayableScript = false
+
+              if (!next.conversionError) {
+                if (next._hwlBuffer) {
+                  hasPlayableScript = true
+                  if (isConnected) {
+                    const title = (next.scriptName || "script").replace(
+                      /\.[^.]+$/,
+                      "",
+                    )
+                    setOriginalScript(next._hwlBuffer, "hwl")
+                    await client.loadHwl(
+                      title,
+                      arrayBufferToBase64(getModifiedScriptData()),
+                    )
+                    state = await client.getStatus()
+                    updateUI()
+                    try {
+                      await client.seek(video.currentTime)
+                      await client.startPlayer()
+                    } catch (err) {
+                      console.error("Queue advance start error:", err)
+                      client.startPlayer().catch(() => {})
+                    }
+                  } else {
+                    const blob = new Blob([next._hwlBuffer], {
+                      type: "application/octet-stream",
+                    })
+                    const hwlFile = new File(
+                      [blob],
+                      next.scriptName || "script.mp3",
+                      { type: "application/octet-stream" },
+                    )
+                    hwlFile.isConvertedHwl = true
+                    scriptBuffer = hwlFile
+                    updateUI()
+                  }
+                } else if (next.scriptFile) {
+                  hasPlayableScript = true
+                  scriptBuffer = next.scriptFile
+                  if (isConnected) {
+                    let qExt = next.scriptFile.name.substring(
+                      next.scriptFile.name.lastIndexOf(".") + 1,
+                    )
+                    if (qExt === "hwl")
+                      setOriginalScript(
+                        await readFileAsArrayBuffer(next.scriptFile),
+                        "hwl",
+                      )
+                    else if (qExt === "funscript")
+                      setOriginalScript(
+                        await readFileAsText(next.scriptFile),
+                        "funscript",
+                      )
+                    await sendScript(scriptBuffer)
+                    try {
+                      await client.seek(video.currentTime)
+                      await client.startPlayer()
+                    } catch (err) {
+                      console.error("Queue advance start error:", err)
+                      client.startPlayer().catch(() => {})
+                    }
+                  } else {
+                    updateUI()
+                  }
+                }
+              } else {
+                scriptBuffer = {}
+                updateUI()
+              }
+
+              renderQueue()
+              setTimeout(updateUI, 150)
+            } else if (activeQueue.length > 0) {
+              activeQueue = []
+              activeQueueIndex = -1
+              renderQueue()
+            }
+          } finally {
+            queueAdvancing = false
+          }
+        }
+
+        function resyncActiveQueue() {
+          if (!activeQueue.length || activeQueueIndex < 0) return
+          const current = activeQueue[activeQueueIndex]
+          const idx = vidQueue.indexOf(current)
+          if (idx === -1) {
             activeQueue = []
             activeQueueIndex = -1
-            scriptBuffer = {}
-            clearOriginalScript()
-            renderQueue()
+            return
           }
+          activeQueue = vidQueue.slice(idx)
+          activeQueueIndex = 0
         }
 
         function updateQueueNavButtons() {
@@ -3499,6 +3805,7 @@
                 vidQueue.length > 1
               ) {
                 vidQueue.splice(idx, 1)
+                resyncActiveQueue()
                 renderQueue()
                 return
               }
@@ -3507,6 +3814,7 @@
                   vidQueue[idx - 1],
                   vidQueue[idx],
                 ]
+                resyncActiveQueue()
                 renderQueue()
                 return
               }
@@ -3518,6 +3826,7 @@
                   vidQueue[idx + 1],
                   vidQueue[idx],
                 ]
+                resyncActiveQueue()
                 renderQueue()
                 return
               }
@@ -3674,8 +3983,15 @@
         }
 
         video.addEventListener("ended", () => {
-          if (!isConnected && activeQueue.length > 0) {
-            advanceQueue()
+          if (activeQueue.length > 0 && activeQueueIndex >= 0) {
+            const now = Date.now()
+            if (
+              !window._lastQueueAdvance ||
+              now - window._lastQueueAdvance > 2000
+            ) {
+              window._lastQueueAdvance = now
+              advanceQueue()
+            }
           }
         })
 
@@ -4682,6 +4998,7 @@
           currentScriptType = type
           buildVizData()
           layoutVizCanvas()
+          if (window.__ccOnScriptChange) window.__ccOnScriptChange()
         }
 
         function clearOriginalScript() {
@@ -4689,6 +5006,7 @@
           currentScriptType = null
           vizData = null
           layoutVizCanvas()
+          if (window.__ccOnScriptChange) window.__ccOnScriptChange()
         }
 
         function updateSliderFill(slider) {
@@ -5128,7 +5446,7 @@
         })
 
         // --- fullscreen handler ---
-        const fsBtn = document.getElementById("fs-btn")
+        const fsBtn = document.getElementById("cc-fs")
         let fsIdleTimer = null
         const FS_IDLE_MS = 2500
 
@@ -5136,9 +5454,7 @@
         const FS_ICON_EXIT = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`
 
         function setFsIcon(fs) {
-          fsBtn.innerHTML =
-            (fs ? FS_ICON_EXIT : FS_ICON_ENTER) +
-            '<span class="hotkey-label">F</span>'
+          fsBtn.innerHTML = fs ? FS_ICON_EXIT : FS_ICON_ENTER
         }
 
         function toggleFullscreen() {
@@ -5948,6 +6264,12 @@
           return Boolean(el.isContentEditable)
         }
 
+        function isRangeInput(el) {
+          return Boolean(
+            el && el instanceof HTMLInputElement && el.type === "range",
+          )
+        }
+
         function blurActiveControlForHotkeys() {
           const el = document.activeElement
 
@@ -5986,6 +6308,585 @@
           }
         }
 
+        // --- CUSTOM VIDEO CONTROLS ---
+
+        const customControls = document.getElementById("custom-controls")
+        const ccPlay = document.getElementById("cc-play")
+        const ccPrev = document.getElementById("cc-prev")
+        const ccNext = document.getElementById("cc-next")
+        const ccMute = document.getElementById("cc-mute")
+        const ccVolume = document.getElementById("cc-volume")
+        const ccTime = document.getElementById("cc-time")
+        const ccHeatmapBtn = document.getElementById("cc-heatmap-btn")
+        const ccProgressWrap = document.getElementById("cc-progress-wrap")
+        const ccProgressTrack = document.getElementById("cc-progress-track")
+        const ccProgressFill = document.getElementById("cc-progress-fill")
+        const ccProgressThumb = document.getElementById("cc-progress-thumb")
+        const ccHeatmap = document.getElementById("cc-heatmap")
+        const ccRestMarkers = document.getElementById("cc-rest-markers")
+        const ccTooltip = document.getElementById("cc-tooltip")
+
+        const CC_ICONS = {
+          play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
+          pause:
+            '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
+          prev: '<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>',
+          next: '<svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>',
+          vol: '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-0.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89 0.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-0.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
+          volMute:
+            '<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c0.03-0.2 0.05-0.41 0.05-0.63zm2.5 0c0 0.94-0.2 1.82-0.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89 0.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-0.67 0.52-1.42 0.93-2.25 1.18v2.06c1.38-0.31 2.63-0.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>',
+          heat: '<svg viewBox="0 0 24 24"><path d="M13.5 0.67s0.74 2.65 0.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l0.03-0.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5 0.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-0.36 3.6-1.21 4.62-2.58 0.39 1.29 0.59 2.65 0.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>',
+        }
+
+        ccPrev.innerHTML = CC_ICONS.prev
+        ccNext.innerHTML = CC_ICONS.next
+        ccMute.innerHTML = CC_ICONS.vol
+        ccHeatmapBtn.innerHTML = CC_ICONS.heat
+
+        let heatmapOn = saveState.heatmap === true
+        let intensityCache = null
+        const REST_THRESHOLD = 0.05
+        const MIN_REST_SEC = 2.0
+
+        function ccDuration() {
+          if (
+            video.currentSrc &&
+            isFinite(video.duration) &&
+            video.duration > 0
+          )
+            return video.duration
+          return state.player.duration || 0
+        }
+        function ccCurrent() {
+          if (video.currentSrc) return video.currentTime || 0
+          return state.player.position || 0
+        }
+
+        // Intensity cache
+        function buildIntensityCache() {
+          if (!vizData) {
+            intensityCache = null
+            return
+          }
+          const dt = 0.025
+          const duration = vizData.duration
+          const n = Math.max(2, Math.ceil(duration / dt) + 1)
+          const val = new Float32Array(n)
+          const act = new Float32Array(n)
+          if (vizData.type === "hwl") {
+            const a = vizData.ampA,
+              b = vizData.ampB
+            for (let i = 0; i < n; i++) {
+              const idx = Math.min(
+                a.length - 1,
+                Math.floor((i * dt) / vizData.dt),
+              )
+              const v = Math.max(a[idx] || 0, b[idx] || 0)
+              val[i] = v
+              act[i] = v
+            }
+          } else {
+            let prev = vizValueAt(0, 0) || 0
+            const raw = new Float32Array(n)
+            for (let i = 0; i < n; i++) {
+              const t = i * dt
+              const v = vizValueAt(0, t)
+              const cur = v == null ? 0 : Math.abs(v)
+              val[i] = cur
+              raw[i] = i === 0 ? 0 : Math.abs(cur - prev) / dt
+              prev = cur
+            }
+            const sorted = Array.from(raw).sort((x, y) => x - y)
+            const p99 = sorted[Math.floor(sorted.length * 0.99)] || 0.001
+            const norm = Math.max(p99, 0.001)
+            for (let i = 0; i < n; i++) act[i] = Math.min(1, raw[i] / norm)
+          }
+          intensityCache = { dt, val, act, duration }
+        }
+        function isRestAt(t) {
+          if (!intensityCache) return false
+          const { duration } = intensityCache
+          const ts = isLoopMode() ? t % duration : t
+          const regs = computeRestRegions()
+          for (const r of regs) {
+            if (ts >= r.start && ts <= r.end) return true
+          }
+          return false
+        }
+
+        // Rest regions
+        function computeRestRegions() {
+          if (!intensityCache) buildIntensityCache()
+          if (!intensityCache) return []
+          const { dt, val } = intensityCache
+          const regions = []
+          let start = null
+          for (let i = 0; i < val.length; i++) {
+            const isRest = val[i] < REST_THRESHOLD
+            if (isRest && start === null) start = i * dt
+            if ((!isRest || i === val.length - 1) && start !== null) {
+              const end = i * dt
+              if (end - start >= MIN_REST_SEC) regions.push({ start, end })
+              start = null
+            }
+          }
+          return regions
+        }
+        function isLoopMode() {
+          const scriptDur = intensityCache ? intensityCache.duration : 0
+          const barDur = ccDuration() || scriptDur
+          return (
+            currentScriptType === "hwl" &&
+            scriptDur > 0 &&
+            barDur > scriptDur * 1.05
+          )
+        }
+        function getRestRegionsForBar() {
+          const regs = computeRestRegions()
+          if (!intensityCache || !isLoopMode()) return regs
+          const scriptDur = intensityCache.duration
+          const barDur = ccDuration() || scriptDur
+          const out = []
+          for (let off = 0; off < barDur; off += scriptDur)
+            regs.forEach((r) =>
+              out.push({ start: r.start + off, end: r.end + off }),
+            )
+          return out
+        }
+
+        function lastActiveTime() {
+          if (!intensityCache) return -1
+          const { dt, val } = intensityCache
+          for (let i = val.length - 1; i >= 0; i--) {
+            if (val[i] >= REST_THRESHOLD) return i * dt
+          }
+          return -1
+        }
+
+        function jumpToPart(dir) {
+          const regions = getRestRegionsForBar()
+          const t = ccCurrent()
+          const lastActive = lastActiveTime()
+          const usable = regions.filter((r) => r.start < lastActive)
+          let region = null
+          if (dir > 0) {
+            region = usable.find((r) => r.start > t + 0.15) || null
+          } else {
+            const c = usable.filter((r) => r.end < t - 0.15)
+            region = c.length ? c[c.length - 1] : null
+          }
+          if (!region) {
+            if (dir < 0) seekToTime(0)
+            return
+          }
+          const target =
+            region.end - region.start >= 3 ? region.end - 3 : region.start
+          seekToTime(target)
+        }
+
+        // Seek
+        function seekToTime(t) {
+          if (!isFinite(t)) return
+          if (video.currentSrc) {
+            const d = video.duration
+            if (isFinite(d) && d > 0) t = Math.min(t, d)
+            t = Math.max(0, t)
+            video.currentTime = t
+            if (isConnected && state.player.title && !syncScriptCheck.checked) {
+              client.seek(t).catch(() => {})
+            }
+          } else if (isConnected && state.player.title) {
+            client.seek(Math.max(0, t)).catch(() => {})
+          }
+        }
+
+        // Heatmap render
+        const HEAT_STOPS = [
+          [0.0, [10, 10, 10]],
+          [0.03, [0, 171, 169]],
+          [0.25, [67, 160, 71]],
+          [0.5, [255, 235, 59]],
+          [0.75, [255, 152, 0]],
+          [1.0, [229, 57, 53]],
+        ]
+
+        function heatRGB(v) {
+          if (v <= REST_THRESHOLD) return [10, 10, 10]
+          const t = Math.min(1, Math.max(0, v))
+          for (let i = 0; i < HEAT_STOPS.length - 1; i++) {
+            const [p0, c0] = HEAT_STOPS[i]
+            const [p1, c1] = HEAT_STOPS[i + 1]
+            if (t >= p0 && t <= p1) {
+              const f = (t - p0) / (p1 - p0 || 1)
+              return [
+                Math.round(c0[0] + (c1[0] - c0[0]) * f),
+                Math.round(c0[1] + (c1[1] - c0[1]) * f),
+                Math.round(c0[2] + (c1[2] - c0[2]) * f),
+              ]
+            }
+          }
+          return [229, 57, 53]
+        }
+
+        function renderHeatmap() {
+          if (!ccHeatmap || !ccProgressTrack) return
+          const w = ccProgressTrack.clientWidth
+          const h = ccProgressTrack.clientHeight
+          if (w <= 0 || h <= 0) return
+          const dpr = window.devicePixelRatio || 1
+          const W = Math.max(1, Math.round(w * dpr))
+          const H = Math.max(1, Math.round(h * dpr))
+          if (ccHeatmap.width !== W || ccHeatmap.height !== H) {
+            ccHeatmap.width = W
+            ccHeatmap.height = H
+          }
+          const ctx = ccHeatmap.getContext("2d")
+          const img = ctx.createImageData(W, H)
+          const px = img.data
+          if (!intensityCache) {
+            for (let i = 0; i < px.length; i += 4) {
+              px[i] = 10
+              px[i + 1] = 10
+              px[i + 2] = 10
+              px[i + 3] = 255
+            }
+            ctx.putImageData(img, 0, 0)
+            return
+          }
+          const scriptDur = intensityCache.duration
+          const barDur = ccDuration() || scriptDur
+          const loop = isLoopMode()
+          const rests = computeRestRegions()
+          const inRest = (ts) => {
+            for (let i = 0; i < rests.length; i++) {
+              const r = rests[i]
+              if (ts < r.start) break
+              if (ts <= r.end) return true
+            }
+            return false
+          }
+          for (let dx = 0; dx < W; dx++) {
+            const tv0 = barDur * (dx / W)
+            const tv1 = barDur * ((dx + 1) / W)
+            let col
+            if (!loop && tv0 >= scriptDur) {
+              col = [10, 10, 10]
+            } else {
+              const tsMid = loop
+                ? ((tv0 + tv1) / 2) % scriptDur
+                : (tv0 + tv1) / 2
+              if (inRest(tsMid)) {
+                col = [10, 10, 10]
+              } else {
+                const r = aggIntensity(
+                  tv0,
+                  Math.max(tv1, tv0 + 0.001),
+                  scriptDur,
+                  loop,
+                )
+                col = heatRGB(Math.max(r.act, 0.08))
+              }
+            }
+            for (let dy = 0; dy < H; dy++) {
+              const o = (dy * W + dx) * 4
+              px[o] = col[0]
+              px[o + 1] = col[1]
+              px[o + 2] = col[2]
+              px[o + 3] = 255
+            }
+          }
+          ctx.putImageData(img, 0, 0)
+        }
+
+        function aggIntensity(t0, t1, scriptDur, loop) {
+          const { act, val, dt } = intensityCache
+          let mxAct = 0,
+            mxVal = 0
+          const scan = (a, b) => {
+            const i0 = Math.max(0, Math.min(act.length - 1, Math.floor(a / dt)))
+            const i1 = Math.max(
+              i0,
+              Math.min(act.length - 1, Math.floor(b / dt)),
+            )
+            for (let i = i0; i <= i1; i++) {
+              if (act[i] > mxAct) mxAct = act[i]
+              if (val[i] > mxVal) mxVal = val[i]
+            }
+          }
+          if (loop) {
+            const a = t0 % scriptDur
+            const b = t1 % scriptDur
+            if (b >= a) scan(a, b)
+            else {
+              scan(a, scriptDur)
+              scan(0, b)
+            }
+          } else {
+            const a = Math.min(t0, scriptDur)
+            const b = Math.min(t1, scriptDur)
+            if (b > a) scan(a, b)
+          }
+          return { act: mxAct, val: mxVal }
+        }
+
+        function renderRestMarkers() {
+          if (!ccRestMarkers || !ccProgressTrack) return
+          const w = ccProgressTrack.clientWidth
+          const h = ccProgressTrack.clientHeight
+          if (w <= 0 || h <= 0) return
+          const dpr = window.devicePixelRatio || 1
+          ccRestMarkers.width = Math.round(w * dpr)
+          ccRestMarkers.height = Math.round(h * dpr)
+          const ctx = ccRestMarkers.getContext("2d")
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+          ctx.clearRect(0, 0, w, h)
+          if (!intensityCache) buildIntensityCache()
+          if (!intensityCache) return
+          const scriptDur = intensityCache.duration
+          const barDur = ccDuration() || scriptDur
+          if (barDur <= 0) return
+          const loop = isLoopMode()
+          ctx.fillStyle = "rgba(255, 255, 255, 0.85)"
+          ctx.fillRect(0, 0, w, h)
+          ctx.fillStyle = "rgba(10, 10, 10, 0.9)"
+          const draw = (r) => {
+            const x1 = Math.floor((r.start / barDur) * w)
+            const x2 = Math.ceil((Math.min(r.end, barDur) / barDur) * w)
+            if (x2 > x1) ctx.fillRect(x1, 0, x2 - x1, h)
+          }
+          const regions = computeRestRegions()
+          if (loop) {
+            for (let off = 0; off < barDur; off += scriptDur)
+              regions.forEach((r) =>
+                draw({ start: r.start + off, end: r.end + off }),
+              )
+          } else {
+            regions.forEach(draw)
+            if (barDur > scriptDur) {
+              const x1 = Math.floor((scriptDur / barDur) * w)
+              ctx.fillRect(x1, 0, w - x1, h)
+            }
+          }
+        }
+
+        function toggleHeatmap() {
+          heatmapOn = !heatmapOn
+          saveState.heatmap = heatmapOn
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+          customControls.classList.toggle("heatmap-on", heatmapOn)
+          ccHeatmapBtn.classList.toggle("active", heatmapOn)
+          buildIntensityCache()
+          renderRestMarkers()
+          if (heatmapOn) {
+            setTimeout(renderHeatmap, 260)
+          }
+        }
+
+        // Progress UI
+        function updateProgressUI() {
+          const duration = ccDuration()
+          const cur = ccCurrent()
+          const pct =
+            duration > 0
+              ? Math.min(100, Math.max(0, (cur / duration) * 100))
+              : 0
+          ccProgressFill.style.width = pct + "%"
+          ccProgressThumb.style.left = pct + "%"
+          ccTime.textContent = formatTime(cur) + " / " + formatTime(duration)
+        }
+
+        // Play/Pause
+        function updateCcPlayIcon() {
+          if (!ccPlay) return
+          const playing = video.currentSrc
+            ? !video.paused && !video.ended
+            : state.player.playing
+          ccPlay.innerHTML = playing ? CC_ICONS.pause : CC_ICONS.play
+          ccPlay.title = playing ? "Pause (Space)" : "Play (Space)"
+        }
+        function toggleCcPlay() {
+          if (video.currentSrc) {
+            if (video.paused) video.play().catch(() => {})
+            else video.pause()
+          } else {
+            togglePlayPauseHotkey()
+          }
+        }
+
+        // Volume UI
+        function updateCcVolumeUI() {
+          if (!ccVolume || !ccMute) return
+          const muted = video.muted || video.volume === 0
+          const display = video.muted ? 0 : video.volume
+          ccVolume.value = display
+          ccVolume.style.setProperty("--vol-fill", display * 100 + "%")
+          ccMute.innerHTML = muted ? CC_ICONS.volMute : CC_ICONS.vol
+          ccMute.title = muted ? "Unmute" : "Mute"
+        }
+
+        // Tooltip
+        function showCcTooltip(text, clientX) {
+          const wrapRect = ccProgressWrap.getBoundingClientRect()
+          ccTooltip.textContent = text
+          ccTooltip.style.left = clientX - wrapRect.left + "px"
+          ccTooltip.classList.add("show")
+        }
+        function hideCcTooltip() {
+          ccTooltip.classList.remove("show")
+        }
+        function handleTooltip(e) {
+          if (!heatmapOn) {
+            hideCcTooltip()
+            return
+          }
+          const rect = ccProgressTrack.getBoundingClientRect()
+          if (rect.width <= 0) return
+          const ratio = Math.min(
+            1,
+            Math.max(0, (e.clientX - rect.left) / rect.width),
+          )
+          const duration = ccDuration()
+          if (duration <= 0) {
+            hideCcTooltip()
+            return
+          }
+          const t = ratio * duration
+          showCcTooltip(isRestAt(t) ? "Rest" : formatTime(t), e.clientX)
+        }
+
+        // Progress drag / click
+        let ccDragging = false
+        function progressSeekFromEvent(e) {
+          const rect = ccProgressTrack.getBoundingClientRect()
+          if (rect.width <= 0) return
+          const ratio = Math.min(
+            1,
+            Math.max(0, (e.clientX - rect.left) / rect.width),
+          )
+          const duration = ccDuration()
+          if (duration <= 0) return
+          seekToTime(ratio * duration)
+        }
+
+        // Events
+        ccPlay.addEventListener("click", toggleCcPlay)
+        ccPrev.addEventListener("click", () => jumpToPart(-1))
+        ccNext.addEventListener("click", () => jumpToPart(1))
+        ccMute.addEventListener("click", () => {
+          video.muted = !video.muted
+        })
+        ccVolume.addEventListener("input", (e) => {
+          const v = parseFloat(e.target.value)
+          video.volume = v
+          if (v > 0) video.muted = false
+        })
+        ccHeatmapBtn.addEventListener("click", toggleHeatmap)
+        video.addEventListener("click", () => {
+          if (video.currentSrc) toggleCcPlay()
+        })
+        video.addEventListener("play", updateCcPlayIcon)
+        video.addEventListener("pause", updateCcPlayIcon)
+        video.addEventListener("volumechange", updateCcVolumeUI)
+        video.addEventListener("timeupdate", updateProgressUI)
+        video.addEventListener("loadedmetadata", () => {
+          updateProgressUI()
+          updateCcVolumeUI()
+          updateCcPlayIcon()
+          renderRestMarkers()
+          if (heatmapOn) renderHeatmap()
+        })
+
+        ccProgressWrap.addEventListener("pointerdown", (e) => {
+          ccDragging = true
+          try {
+            ccProgressWrap.setPointerCapture(e.pointerId)
+          } catch (_) {}
+          progressSeekFromEvent(e)
+        })
+        ccProgressWrap.addEventListener("pointermove", (e) => {
+          if (ccDragging) progressSeekFromEvent(e)
+          handleTooltip(e)
+        })
+        ccProgressWrap.addEventListener("pointerup", () => {
+          ccDragging = false
+        })
+        ccProgressWrap.addEventListener("pointercancel", () => {
+          ccDragging = false
+        })
+        ccProgressWrap.addEventListener("mousemove", handleTooltip)
+        ccProgressWrap.addEventListener("mouseleave", hideCcTooltip)
+
+        window.__ccOnScriptChange = function () {
+          intensityCache = null
+          buildIntensityCache()
+          renderRestMarkers()
+          if (heatmapOn) {
+            renderHeatmap()
+          }
+          updateProgressUI()
+        }
+
+        // Autohide controls
+        let controlsIdleTimer = null
+        const CONTROLS_IDLE_MS = 2500
+        const videoShellEl = document.getElementById("video-shell")
+
+        function showControlsNow() {
+          if (!videoShellEl) return
+          clearTimeout(controlsIdleTimer)
+          videoShellEl.classList.remove("controls-idle")
+          armControlsIdle()
+        }
+
+        function armControlsIdle() {
+          if (!videoShellEl) return
+          clearTimeout(controlsIdleTimer)
+          if (video.paused || video.ended) return
+          controlsIdleTimer = setTimeout(() => {
+            if (!document.fullscreenElement) {
+              videoShellEl.classList.add("controls-idle")
+            }
+          }, CONTROLS_IDLE_MS)
+        }
+
+        if (videoShellEl) {
+          videoShellEl.addEventListener("mouseenter", showControlsNow)
+          videoShellEl.addEventListener("mousemove", showControlsNow)
+          videoShellEl.addEventListener("mouseleave", () => {
+            clearTimeout(controlsIdleTimer)
+            if (!video.paused && !video.ended && !document.fullscreenElement) {
+              controlsIdleTimer = setTimeout(() => {
+                videoShellEl.classList.add("controls-idle")
+              }, 600)
+            }
+          })
+        }
+        video.addEventListener("play", armControlsIdle)
+        video.addEventListener("pause", () => {
+          if (videoShellEl) {
+            clearTimeout(controlsIdleTimer)
+            videoShellEl.classList.remove("controls-idle")
+          }
+        })
+        video.addEventListener("ended", () => {
+          if (videoShellEl) {
+            clearTimeout(controlsIdleTimer)
+            videoShellEl.classList.remove("controls-idle")
+          }
+        })
+
+        // Init
+        customControls.classList.toggle("heatmap-on", heatmapOn)
+        ccHeatmapBtn.classList.toggle("active", heatmapOn)
+        updateCcVolumeUI()
+        updateProgressUI()
+        updateCcPlayIcon()
+        buildIntensityCache()
+        renderRestMarkers()
+        if (heatmapOn) {
+          setTimeout(renderHeatmap, 260)
+        }
+
         document.addEventListener(
           "keydown",
           (e) => {
@@ -6007,6 +6908,8 @@
 
             const isMuteKey = code === "KeyM"
 
+            const isPartKey = code === "ArrowLeft" || code === "ArrowRight"
+
             const isPlayPauseKey = code === "Space"
             const isTabKey =
               code === "Digit1" ||
@@ -6024,8 +6927,10 @@
               isResyncKey ||
               isMuteKey ||
               isPlayPauseKey ||
+              isPartKey ||
               isTabKey
             if (!isAppHotkey) return
+            if (isPartKey && isRangeInput(document.activeElement)) return
             blurActiveControlForHotkeys()
 
             // Power
@@ -6114,6 +7019,13 @@
             if (isPlayPauseKey && !e.repeat) {
               e.preventDefault()
               togglePlayPauseHotkey()
+              return
+            }
+
+            // Previous / Next part
+            if (isPartKey && !e.repeat) {
+              e.preventDefault()
+              jumpToPart(code === "ArrowLeft" ? -1 : 1)
               return
             }
 
