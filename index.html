@@ -499,6 +499,10 @@
         background: rgba(0, 120, 212, 0.15);
       }
 
+      button.invert-btn {
+        font-size: 12px;
+      }
+
       /* Quick connect button (bottom bar) */
       button.bottom-connect-btn {
         width: 100px !important;
@@ -2171,6 +2175,19 @@
                         value="0"
                         style="flex: 1; min-width: 0"
                       />
+                      <button
+                        id="btn-invert-a"
+                        class="invert-btn"
+                        onclick="toggleInvert(this, 'A')"
+                        type="button"
+                      >
+                        Invert
+                      </button>
+                      <span
+                        class="hotkey-label hotkey-label-remap"
+                        data-action="invertA"
+                        >Z</span
+                      >
                     </div>
                     <div
                       style="
@@ -2203,6 +2220,19 @@
                         value="0"
                         style="flex: 1; min-width: 0"
                       />
+                      <button
+                        id="btn-invert-b"
+                        class="invert-btn"
+                        onclick="toggleInvert(this, 'B')"
+                        type="button"
+                      >
+                        Invert
+                      </button>
+                      <span
+                        class="hotkey-label hotkey-label-remap"
+                        data-action="invertB"
+                        >X</span
+                      >
                     </div>
                   </div>
                 </div>
@@ -2361,6 +2391,19 @@
                         value="0"
                         style="flex: 1; min-width: 0"
                       />
+                      <button
+                        id="btn-invert-a-2"
+                        class="invert-btn"
+                        onclick="toggleInvert(this, 'A2')"
+                        type="button"
+                      >
+                        Invert
+                      </button>
+                      <span
+                        class="hotkey-label hotkey-label-remap"
+                        data-action="invertA2"
+                        >Shift+Z</span
+                      >
                     </div>
                     <div
                       style="
@@ -2393,6 +2436,19 @@
                         value="0"
                         style="flex: 1; min-width: 0"
                       />
+                      <button
+                        id="btn-invert-b-2"
+                        class="invert-btn"
+                        onclick="toggleInvert(this, 'B2')"
+                        type="button"
+                      >
+                        Invert
+                      </button>
+                      <span
+                        class="hotkey-label hotkey-label-remap"
+                        data-action="invertB2"
+                        >Shift+X</span
+                      >
                     </div>
                   </div>
                 </div>
@@ -4483,6 +4539,11 @@
           delayA2: 0,
           delayB2: 0,
 
+          invertA: false,
+          invertB: false,
+          invertA2: false,
+          invertB2: false,
+
           heatmap: false,
         }
 
@@ -4529,7 +4590,11 @@
           localStorage.setItem("saveState", JSON.stringify(saveState))
           updateSliderFill(sliderA)
           clearTimeout(delayDebounce)
-          delayDebounce = setTimeout(applyDelayAndResend, 300)
+          delayDebounce = setTimeout(() => {
+            buildVizData()
+            updateMediaVisualizers()
+            applyDelayAndResend()
+          }, 300)
         })
 
         sliderB.addEventListener("input", (e) => {
@@ -4539,8 +4604,26 @@
           localStorage.setItem("saveState", JSON.stringify(saveState))
           updateSliderFill(sliderB)
           clearTimeout(delayDebounce)
-          delayDebounce = setTimeout(applyDelayAndResend, 300)
+          delayDebounce = setTimeout(() => {
+            buildVizData()
+            updateMediaVisualizers()
+            applyDelayAndResend()
+          }, 300)
         })
+
+        let invertA = saveState.invertA || false
+        let invertB = saveState.invertB || false
+        let invertA2 = saveState.invertA2 || false
+        let invertB2 = saveState.invertB2 || false
+
+        if (invertA)
+          document.getElementById("btn-invert-a").classList.add("primary")
+        if (invertB)
+          document.getElementById("btn-invert-b").classList.add("primary")
+        if (invertA2)
+          document.getElementById("btn-invert-a-2").classList.add("primary")
+        if (invertB2)
+          document.getElementById("btn-invert-b-2").classList.add("primary")
 
         // ============ FREQUENCY (DISABLED - removed from API) ============
         // const sliderFreqMin = document.getElementById("slider-freq-min")
@@ -6539,6 +6622,34 @@
           handleApiCall(client.setAutoIncrease())
         }
 
+        window.toggleInvert = function (btn, channel) {
+          const isActive = btn.classList.toggle("primary")
+          if (channel === "A") {
+            invertA = isActive
+            saveState.invertA = isActive
+          } else if (channel === "B") {
+            invertB = isActive
+            saveState.invertB = isActive
+          } else if (channel === "A2") {
+            invertA2 = isActive
+            saveState.invertA2 = isActive
+          } else if (channel === "B2") {
+            invertB2 = isActive
+            saveState.invertB2 = isActive
+          }
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+
+          if (channel === "A" || channel === "B") {
+            buildVizData()
+            updateMediaVisualizers()
+            applyDelayAndResend()
+          } else {
+            buildVizData2()
+            updateMediaVisualizers()
+            applyDelayAndResend2()
+          }
+        }
+
         const powerADisplay = document.getElementById("val-a")
         const powerBDisplay = document.getElementById("val-b")
         const btnAP = document.getElementById("pwrA+")
@@ -6587,8 +6698,13 @@
           localStorage.setItem("saveState", JSON.stringify(saveState))
           updateSliderFill(sliderA2)
           clearTimeout(window._delayDebounce2)
-          window._delayDebounce2 = setTimeout(applyDelayAndResend2, 300)
+          window._delayDebounce2 = setTimeout(() => {
+            buildVizData2()
+            updateMediaVisualizers()
+            applyDelayAndResend2()
+          }, 300)
         })
+
         sliderB2.addEventListener("input", (e) => {
           delayB2 = parseFloat(e.target.value)
           delayB2Val.textContent = delayB2.toFixed(2)
@@ -6596,7 +6712,11 @@
           localStorage.setItem("saveState", JSON.stringify(saveState))
           updateSliderFill(sliderB2)
           clearTimeout(window._delayDebounce2)
-          window._delayDebounce2 = setTimeout(applyDelayAndResend2, 300)
+          window._delayDebounce2 = setTimeout(() => {
+            buildVizData2()
+            updateMediaVisualizers()
+            applyDelayAndResend2()
+          }, 300)
         })
 
         async function handleApiCall2(promise) {
@@ -7402,14 +7522,23 @@
 
         function getModifiedScriptData2() {
           if (!originalScriptBuffer2 || !currentScriptType2) return null
+          const hasDelay =
+            currentScriptType2 === "hwl"
+              ? delayA2 !== 0 || delayB2 !== 0
+              : delayA2 !== 0
+          const hasInvert =
+            currentScriptType2 === "hwl" ? invertA2 || invertB2 : invertA2
+          if (!hasDelay && !hasInvert) return originalScriptBuffer2
           if (currentScriptType2 === "hwl") {
-            return delayA2 === 0 && delayB2 === 0
-              ? originalScriptBuffer2
-              : modifyHwlBuffer(originalScriptBuffer2, delayA2, delayB2)
+            return modifyHwlBuffer(
+              originalScriptBuffer2,
+              delayA2,
+              delayB2,
+              invertA2,
+              invertB2,
+            )
           } else if (currentScriptType2 === "funscript") {
-            return delayA2 === 0
-              ? originalScriptBuffer2
-              : modifyFunscriptText(originalScriptBuffer2, delayA2)
+            return modifyFunscriptText(originalScriptBuffer2, delayA2, invertA2)
           }
           return originalScriptBuffer2
         }
@@ -8074,8 +8203,8 @@
           return btoa(binary)
         }
 
-        // --- DELAY MODIFICATION LOGIC ---
-        function modifyHwlBuffer(originalBuffer, dA, dB) {
+        // --- DELAY + INVERT MODIFICATION LOGIC ---
+        function modifyHwlBuffer(originalBuffer, dA, dB, invA, invB) {
           const newBuffer = originalBuffer.slice(0)
           const view = new DataView(newBuffer)
           const totalFrames = (newBuffer.byteLength - 8) / 16
@@ -8116,15 +8245,15 @@
 
           for (let i = 0; i < totalFrames; i++) {
             const o = 8 + i * 16
-            view.setFloat32(o, sAmpA[i], true)
-            view.setFloat32(o + 4, sAmpB[i], true)
+            view.setFloat32(o, invA ? 1.0 - sAmpA[i] : sAmpA[i], true)
+            view.setFloat32(o + 4, invB ? 1.0 - sAmpB[i] : sAmpB[i], true)
             view.setFloat32(o + 8, sFreqA[i], true)
             view.setFloat32(o + 12, sFreqB[i], true)
           }
           return newBuffer
         }
 
-        function modifyFunscriptText(originalText, dA) {
+        function modifyFunscriptText(originalText, dA, invA) {
           try {
             const data = JSON.parse(originalText)
             if (!data.actions || data.actions.length === 0) return originalText
@@ -8138,8 +8267,10 @@
               if (i === 0 && newAt < 0) newAt = 0
               if (i === data.actions.length - 1 && newAt > maxTime)
                 newAt = maxTime
+              let pos = pt.pos
+              if (invA) pos = 100 - pos
               if (newAt >= 0 && newAt <= maxTime)
-                newActions.push({ pos: pt.pos, at: Math.round(newAt) })
+                newActions.push({ pos: pos, at: Math.round(newAt) })
             }
 
             let finalActions = []
@@ -8202,14 +8333,23 @@
 
         function getModifiedScriptData() {
           if (!originalScriptBuffer || !currentScriptType) return null
+          const hasDelay =
+            currentScriptType === "hwl"
+              ? delayA !== 0 || delayB !== 0
+              : delayA !== 0
+          const hasInvert =
+            currentScriptType === "hwl" ? invertA || invertB : invertA
+          if (!hasDelay && !hasInvert) return originalScriptBuffer
           if (currentScriptType === "hwl") {
-            return delayA === 0 && delayB === 0
-              ? originalScriptBuffer
-              : modifyHwlBuffer(originalScriptBuffer, delayA, delayB)
+            return modifyHwlBuffer(
+              originalScriptBuffer,
+              delayA,
+              delayB,
+              invertA,
+              invertB,
+            )
           } else if (currentScriptType === "funscript") {
-            return delayA === 0
-              ? originalScriptBuffer
-              : modifyFunscriptText(originalScriptBuffer, delayA)
+            return modifyFunscriptText(originalScriptBuffer, delayA, invertA)
           }
           return originalScriptBuffer
         }
@@ -9019,11 +9159,15 @@
           renderRestMarkers()
           if (window.__ccOnScriptChange) window.__ccOnScriptChange()
         }
+
         function buildVizData() {
-          vizData = buildVizDataFrom(originalScriptBuffer, currentScriptType)
+          const modified = getModifiedScriptData()
+          vizData = buildVizDataFrom(modified, currentScriptType)
         }
+
         function buildVizData2() {
-          vizData2 = buildVizDataFrom(originalScriptBuffer2, currentScriptType2)
+          const modified = getModifiedScriptData2()
+          vizData2 = buildVizDataFrom(modified, currentScriptType2)
           layoutVizCanvas()
         }
 
@@ -9221,8 +9365,7 @@
             return
           }
 
-          const tc = t - (cfg.shift || 0)
-          const pts = vizWindowPoints(cfg.data, cfg.ch, tc - layL, tc + layR)
+          const pts = vizWindowPoints(cfg.data, cfg.ch, t - layL, t + layR)
 
           if (pts.length) {
             if (cfg.freqOn && cfg.data.type === "hwl") {
@@ -9231,8 +9374,8 @@
               for (let i = 1; i < pts.length; i++) {
                 const a = pts[i - 1]
                 const b = pts[i]
-                const x1 = xOf(a.t + (cfg.shift || 0))
-                const x2 = xOf(b.t + (cfg.shift || 0))
+                const x1 = xOf(a.t)
+                const x2 = xOf(b.t)
                 if (x2 < ox || x1 > ox + gw) continue
                 ctx.fillStyle = active
                   ? freqColor(freqValueAt(cfg.data, cfg.ch, b.t) || 0)
@@ -9256,13 +9399,13 @@
             ctx.beginPath()
             for (let i = 0; i < pts.length; i++) {
               const a = pts[i]
-              const aX = xOf(a.t + (cfg.shift || 0))
+              const aX = xOf(a.t)
               if (i === 0) {
                 ctx.moveTo(aX, yOf(a.v))
                 continue
               }
               const p = pts[i - 1]
-              const pX = xOf(p.t + (cfg.shift || 0))
+              const pX = xOf(p.t)
               if (a.s != null && p.s != null) {
                 const dt = a.t - p.t
                 const dx = (aX - pX) / 3
@@ -9282,7 +9425,7 @@
             ctx.globalAlpha = 1
           }
 
-          const val = vizValueAt(cfg.data, cfg.ch, tc)
+          const val = vizValueAt(cfg.data, cfg.ch, t)
           if (val !== null && val !== undefined) {
             const xT = xOf(t)
             ctx.strokeStyle = active
@@ -9363,7 +9506,6 @@
                   bgColor: viz.bgColorA2,
                   bgOpacity: viz.bgOpacityA2,
                   freqOn: viz.freqA2,
-                  shift: delayA2,
                   winL: viz.winLeft2,
                   winR: viz.winRight2,
                   dot: viz.dotSize2,
@@ -9383,7 +9525,6 @@
                   bgColor: viz.bgColorB2,
                   bgOpacity: viz.bgOpacityB2,
                   freqOn: viz.freqB2,
-                  shift: vizData2 && vizData2.type === "hwl" ? delayB2 : 0,
                   winL: viz.winLeft2,
                   winR: viz.winRight2,
                   dot: viz.dotSize2,
@@ -9409,7 +9550,6 @@
                   bgColor: viz.bgColorA,
                   bgOpacity: viz.bgOpacityA,
                   freqOn: viz.freqA,
-                  shift: delayA,
                   winL: viz.winLeft,
                   winR: viz.winRight,
                   dot: viz.dotSize,
@@ -9429,7 +9569,6 @@
                   bgColor: viz.bgColorB,
                   bgOpacity: viz.bgOpacityB,
                   freqOn: viz.freqB,
-                  shift: vizData && vizData.type === "hwl" ? delayB : 0,
                   winL: viz.winLeft,
                   winR: viz.winRight,
                   dot: viz.dotSize,
@@ -9467,7 +9606,6 @@
                   bgColor: viz.bgColorA,
                   bgOpacity: viz.bgOpacityA,
                   freqOn: viz.freqA,
-                  shift: delayA,
                   winL: viz.winLeft,
                   winR: viz.winRight,
                   dot: viz.dotSize,
@@ -9487,7 +9625,6 @@
                   bgColor: viz.bgColorB,
                   bgOpacity: viz.bgOpacityB,
                   freqOn: viz.freqB,
-                  shift: vizData && vizData.type === "hwl" ? delayB : 0,
                   winL: viz.winLeft,
                   winR: viz.winRight,
                   dot: viz.dotSize,
@@ -9516,7 +9653,6 @@
                   bgColor: viz.bgColorA2,
                   bgOpacity: viz.bgOpacityA2,
                   freqOn: viz.freqA2,
-                  shift: delayA2,
                   winL: viz.winLeft2,
                   winR: viz.winRight2,
                   dot: viz.dotSize2,
@@ -9536,7 +9672,6 @@
                   bgColor: viz.bgColorB2,
                   bgOpacity: viz.bgOpacityB2,
                   freqOn: viz.freqB2,
-                  shift: vizData2 && vizData2.type === "hwl" ? delayB2 : 0,
                   winL: viz.winLeft2,
                   winR: viz.winRight2,
                   dot: viz.dotSize2,
@@ -10710,6 +10845,8 @@
           vizToggleB: "KeyE",
           mute: "KeyM",
           resync: "KeyR",
+          invertA: "KeyZ",
+          invertB: "KeyX",
           // client 2
           powerIncA2: "Shift+KeyW",
           powerDecA2: "Shift+KeyS",
@@ -10719,6 +10856,8 @@
           vizToggleB2: "Shift+KeyE",
           mute2: "Shift+KeyM",
           resync2: "Shift+KeyR",
+          invertA2: "Shift+KeyZ",
+          invertB2: "Shift+KeyX",
         }
 
         const HOTKEY_DISPLAY = {
@@ -10943,11 +11082,20 @@
             const isMuteKey2 = isDoubleMode && matchHotkey("mute2", e)
             const isResyncKey2 = isDoubleMode && matchHotkey("resync2", e)
 
+            const isInvertKey =
+              matchHotkey("invertA", e) || matchHotkey("invertB", e)
+
+            const isInvertKey2 =
+              isDoubleMode &&
+              (matchHotkey("invertA2", e) || matchHotkey("invertB2", e))
+
             const isAppHotkey =
               isPowerKey ||
               isPowerKey2 ||
               isVizKey ||
               isVizKey2 ||
+              isInvertKey ||
+              isInvertKey2 ||
               isFullscreenKey ||
               isResyncKey ||
               isResyncKey2 ||
@@ -11064,6 +11212,28 @@
               ) {
                 e.preventDefault()
                 btnMute2.click()
+              }
+              return
+            }
+
+            // Invert
+            if (isInvertKey && !e.repeat) {
+              e.preventDefault()
+              if (matchHotkey("invertA", e)) {
+                document.getElementById("btn-invert-a").click()
+              } else if (matchHotkey("invertB", e)) {
+                document.getElementById("btn-invert-b").click()
+              }
+              return
+            }
+
+            // Invert 2
+            if (isInvertKey2 && !e.repeat) {
+              e.preventDefault()
+              if (matchHotkey("invertA2", e)) {
+                document.getElementById("btn-invert-a-2").click()
+              } else if (matchHotkey("invertB2", e)) {
+                document.getElementById("btn-invert-b-2").click()
               }
               return
             }
