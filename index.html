@@ -1894,6 +1894,109 @@
       #panel-visualizer .viz-page {
         flex: 0 1 auto;
       }
+
+      /* ===== FUNSCRIPT PANEL ===== */
+      #panel-funscript {
+        padding: 4px 8px;
+      }
+      .funscript-wrapper {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        align-items: stretch;
+      }
+      .fs-col {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+      .fs-cap {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+      .fs-sub {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .fs-box {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-height: 0;
+      }
+      .fs-desc {
+        font-size: 11px;
+        color: var(--text-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .fs-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .fs-dim {
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+      .fs-toggles {
+        display: flex;
+        gap: 2px;
+        flex-shrink: 0;
+      }
+      button.fs-toggle {
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        height: 20px;
+        padding: 0 8px;
+        font-size: 11px;
+        font-weight: normal;
+        color: var(--text-dim);
+      }
+      button.fs-toggle:hover {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      button.fs-toggle.active {
+        color: #fff;
+        border-color: var(--accent);
+        background: rgba(0, 120, 212, 0.15);
+      }
+
+      /* ===== QUEUE ROWS: CHANNEL B SCRIPT LINES ===== */
+      .queue-names .queue-script-1b {
+        border-left: 3px solid var(--client1);
+        border-radius: 0;
+        padding-left: 6px;
+        opacity: 0.85;
+      }
+      .queue-names .queue-script-2b {
+        border-left: 3px solid var(--client2);
+        border-radius: 0;
+        padding-left: 6px;
+        opacity: 0.85;
+      }
+      .queue-names .queue-script-1b.disabled,
+      .queue-names .queue-script-2b.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .queue-names .queue-script-1b.disabled:hover,
+      .queue-names .queue-script-2b.disabled:hover {
+        background: transparent;
+      }
     </style>
   </head>
   <body>
@@ -3824,6 +3927,112 @@
         </div>
       </div>
 
+      <!-- FUNSCRIPT PANEL -->
+      <div class="tab-panel" id="panel-funscript">
+        <div class="funscript-wrapper">
+          <!-- ===== Funscript 1.0 ===== -->
+          <div class="fs-col">
+            <span class="fs-cap">Funscript 1.0</span>
+            <div class="fs-row">
+              <div class="fs-toggles" id="fs-mode-toggles">
+                <button class="fs-toggle" data-fs-mode="default">
+                  default
+                </button>
+                <button class="fs-toggle" data-fs-mode="motion">motion</button>
+                <button class="fs-toggle" data-fs-mode="simple">simple</button>
+              </div>
+              <span class="fs-desc" id="fs-mode-desc"></span>
+            </div>
+            <div class="fs-box panel-box" id="fs-box-1">
+              <div class="fs-sub" id="fs-sub-motion" style="display: none">
+                <div class="fs-row">
+                  <div class="fs-toggles" id="fs-motion-toggles">
+                    <button class="fs-toggle" data-fs-motion="stereo">
+                      stereo
+                    </button>
+                    <button class="fs-toggle" data-fs-motion="mono">
+                      mono
+                    </button>
+                    <button class="fs-toggle" data-fs-motion="dual">
+                      dual-script
+                    </button>
+                  </div>
+                  <span class="fs-desc" id="fs-motion-desc"></span>
+                </div>
+                <div class="fs-row">
+                  <label
+                    style="
+                      min-width: 96px;
+                      font-size: 11px;
+                      white-space: nowrap;
+                    "
+                  >
+                    Motion profile:
+                    <span id="fs-profile-val" style="color: var(--text-main)"
+                      >60</span
+                    >%
+                  </label>
+                  <input
+                    type="range"
+                    id="fs-profile"
+                    class="delay-slider"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value="60"
+                    style="width: 130px; flex: 0 1 auto"
+                  />
+                </div>
+              </div>
+              <div class="fs-sub" id="fs-sub-simple" style="display: none">
+                <div class="fs-row">
+                  <div class="fs-toggles" id="fs-simple-toggles">
+                    <button class="fs-toggle" data-fs-simple="mono">
+                      mono
+                    </button>
+                    <button class="fs-toggle" data-fs-simple="dual">
+                      dual-script
+                    </button>
+                  </div>
+                  <span class="fs-desc" id="fs-simple-desc"></span>
+                </div>
+                <div class="fs-row">
+                  <label style="font-size: 11px; white-space: nowrap"
+                    >frequency:</label
+                  >
+                  <div class="fs-toggles" id="fs-freq-toggles">
+                    <button class="fs-toggle" data-fs-freq="intensity">
+                      intensity based
+                    </button>
+                    <button class="fs-toggle" data-fs-freq="min">min</button>
+                    <button class="fs-toggle" data-fs-freq="max">max</button>
+                  </div>
+                  <span class="fs-desc" id="fs-freq-desc"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ===== Funscript 2.0 ===== -->
+          <div class="fs-col">
+            <span class="fs-cap">Funscript 2.0</span>
+            <div class="fs-row">
+              <div class="fs-toggles" id="fs2-mode-toggles">
+                <button class="fs-toggle active" data-fs2-mode="default">
+                  default
+                </button>
+              </div>
+              <span class="fs-desc" id="fs2-mode-desc"
+                >processed by Howl. Delay and invert don't work for channel
+                B</span
+              >
+            </div>
+            <div class="fs-box panel-box">
+              <span class="fs-dim">Coming soon. Probably</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- CONNECTION PANEL -->
       <div class="tab-panel" id="panel-connection">
         <div class="connection-wrapper">
@@ -3959,8 +4168,11 @@
         <button class="tab-btn" data-target="panel-visualizer">
           Visualizer <span class="hotkey-label">3</span>
         </button>
+        <button class="tab-btn" data-target="panel-funscript">
+          Funscript <span class="hotkey-label">4</span>
+        </button>
         <button class="tab-btn" data-target="panel-connection">
-          Connection <span class="hotkey-label">4</span>
+          Connection <span class="hotkey-label">5</span>
         </button>
       </div>
       <div class="bar-center">
@@ -4544,6 +4756,12 @@
           invertA2: false,
           invertB2: false,
 
+          fsMode: "default",
+          fsMotionCh: "stereo",
+          fsSimpleCh: "mono",
+          fsSimpleFreq: "intensity",
+          fsProfile: 0.6,
+
           heatmap: false,
         }
 
@@ -5123,17 +5341,39 @@
             this.conversionError2 = null
             this.conversionPromise2 = null
             this._hwlBuffer2 = null
+            // slot 1b / 2b (channel B script, dual-script modes)
+            this.scriptFile1b = null
+            this.scriptName1b = null
+            this.scriptFile2b = null
+            this.scriptName2b = null
           }
           slotDisplay(slot) {
             const conv = slot === 1 ? this.converting : this.converting2
             const err =
               slot === 1 ? this.conversionError : this.conversionError2
             const name = slot === 1 ? this.scriptName : this.scriptName2
+            const prefix = fsIsDual() ? "A: " : ""
             if (conv)
-              return `<span style="color: #ff9800; font-weight: 500;">Converting audio...</span>`
+              return `<span style="color: #ff9800; font-weight: 500;">${prefix}Converting audio...</span>`
             if (err)
-              return `<span style="color: var(--danger); font-weight: 500;">Conversion failed</span>`
-            return this.escapeHtml(name || "No script")
+              return `<span style="color: var(--danger); font-weight: 500;">${prefix}Conversion failed</span>`
+            return this.escapeHtml(prefix + (name || "No script"))
+          }
+          slotDisplayB(slotB) {
+            const prefix = fsIsDual() ? "B: " : ""
+            const aFile = slotB === "1b" ? this.scriptFile : this.scriptFile2
+            if (aFile && /\.hwl$/i.test(aFile.name)) return prefix + "—"
+            const name = slotB === "1b" ? this.scriptName1b : this.scriptName2b
+            if (name) return this.escapeHtml(prefix + name)
+            const aName = slotB === "1b" ? this.scriptName : this.scriptName2
+            if (aName && aName !== "No script")
+              return this.escapeHtml(prefix + "(copy of A) " + aName)
+            return this.escapeHtml(prefix + "No script")
+          }
+          bDisabled(slotB) {
+            if (!fsIsDual()) return true
+            const aFile = slotB === "1b" ? this.scriptFile : this.scriptFile2
+            return !!aFile && /\.hwl$/i.test(aFile.name)
           }
           render(index, isLastItem) {
             const row = document.createElement("div")
@@ -5161,6 +5401,15 @@
             const script2Html = isDoubleMode
               ? `<span class="queue-scriptname queue-script-2" data-slot="2" title="${this.escapeHtml(this.scriptName2 || "No script")} — click to replace">${this.slotDisplay(2)}</span>`
               : ""
+            const b1Dis = this.bDisabled("1b")
+            const b2Dis = this.bDisabled("2b")
+            const script1bHtml = fsIsDual()
+              ? `<span class="queue-scriptname queue-script-1b${b1Dis ? " disabled" : ""}" data-slot="1b" title="${this.escapeHtml(this.scriptName1b || "No script")}">${this.slotDisplayB("1b")}</span>`
+              : ""
+            const script2bHtml =
+              fsIsDual() && isDoubleMode
+                ? `<span class="queue-scriptname queue-script-2b${b2Dis ? " disabled" : ""}" data-slot="2b" title="${this.escapeHtml(this.scriptName2b || "No script")}">${this.slotDisplayB("2b")}</span>`
+                : ""
             row.innerHTML = `
                         <div class="queue-left-group">
                         <div class="queue-nav">
@@ -5174,13 +5423,17 @@
                         <div class="queue-names">
                         <span class="queue-vidname" title="${this.escapeHtml(this.videoName)} — click to replace video">${this.escapeHtml(this.videoName)}</span>
                         <span class="queue-scriptname queue-script-1" data-slot="1" title="${this.escapeHtml(this.scriptName || "No script")} — click to replace">${this.slotDisplay(1)}</span>
+                        ${script1bHtml}
                         ${script2Html}
+                        ${script2bHtml}
                         </div>
                         <button class="queue-deletebtn" ${deleteDisabled} title="${deleteTitle}">Del</button>
                         <input type="file" class="queue-fileinput-multi" accept="video/*, .hwl, .funscript, .mp3" multiple style="display: none" />
                         <input type="file" class="queue-fileinput-video" accept="video/*" style="display: none" />
                         <input type="file" class="queue-fileinput-script" data-slot="1" accept=".hwl, .funscript, .mp3" style="display: none" />
+                        <input type="file" class="queue-fileinput-script" data-slot="1b" accept=".funscript, .hwl" style="display: none" ${b1Dis ? "disabled" : ""} />
                         <input type="file" class="queue-fileinput-script" data-slot="2" accept=".hwl, .funscript, .mp3" style="display: none" />
+                        <input type="file" class="queue-fileinput-script" data-slot="2b" accept=".funscript, .hwl" style="display: none" ${b2Dis ? "disabled" : ""} />
                         `
             return row
           }
@@ -5307,6 +5560,11 @@
             item.converting2 = false
             item.conversionPromise2 = null
           }
+          if (isAudio || /\.hwl$/i.test(file.name)) {
+            clearScriptSlotB(item, slot === 1 ? "1b" : "2b")
+          } else if (fsIsDual()) {
+            copyScriptToSlotB(item, slot === 1 ? "1b" : "2b", file)
+          }
           if (!isAudio) return
           if (otherSameFile && otherPromise) {
             const p = otherPromise
@@ -5342,6 +5600,29 @@
           } else {
             startBackgroundConversion(item, file, slot)
           }
+        }
+
+        function assignScriptToSlotB(item, slotB, file) {
+          if (slotB === "1b") {
+            item.scriptFile1b = file
+            item.scriptName1b = file.name
+          } else {
+            item.scriptFile2b = file
+            item.scriptName2b = file.name
+          }
+        }
+        function clearScriptSlotB(item, slotB) {
+          if (slotB === "1b") {
+            item.scriptFile1b = null
+            item.scriptName1b = null
+          } else {
+            item.scriptFile2b = null
+            item.scriptName2b = null
+          }
+        }
+        function copyScriptToSlotB(item, slotB, file) {
+          const cur = slotB === "1b" ? item.scriptFile1b : item.scriptFile2b
+          if (!cur) assignScriptToSlotB(item, slotB, file)
         }
 
         function fillEmptySlot(item) {
@@ -5453,6 +5734,7 @@
           const buffer = item._hwlBuffer2
           const file = item.scriptFile2
           if (!buffer && !file) return
+          setActiveFsB(2, item.scriptFile2b)
 
           try {
             if (buffer) {
@@ -5497,6 +5779,8 @@
         async function playFromQueue(idx) {
           const next = vidQueue[idx]
           if (!next || queueAdvancing) return
+
+          setActiveFsB(1, next.scriptFile1b)
 
           queueAdvancing = true
 
@@ -5642,6 +5926,7 @@
               activeQueueIndex++
               const next = activeQueue[activeQueueIndex]
               if (!next) return
+              setActiveFsB(1, next.scriptFile1b)
 
               if (next.converting) {
                 video.pause()
@@ -5968,6 +6253,20 @@
                   .click()
                 return
               }
+              if (t.classList.contains("queue-script-1b")) {
+                if (t.classList.contains("disabled")) return
+                row
+                  .querySelector('.queue-fileinput-script[data-slot="1b"]')
+                  .click()
+                return
+              }
+              if (t.classList.contains("queue-script-2b")) {
+                if (t.classList.contains("disabled")) return
+                row
+                  .querySelector('.queue-fileinput-script[data-slot="2b"]')
+                  .click()
+                return
+              }
               if (t.classList.contains("queue-vidname")) {
                 row.querySelector(".queue-fileinput-video").click()
                 return
@@ -5995,8 +6294,19 @@
               ) {
                 const s = Array.from(e.target.files || [])[0]
                 if (s && isScriptFile(s.name)) {
-                  assignScriptToSlot(item, parseInt(e.target.dataset.slot), s)
-                  fillEmptySlot(item)
+                  const slot = e.target.dataset.slot
+                  if (slot === "1b" || slot === "2b") {
+                    if (/\.hwl$/i.test(s.name)) {
+                      // hwl always lives in channel A: move it there, empty B
+                      assignScriptToSlot(item, slot === "1b" ? 1 : 2, s)
+                      clearScriptSlotB(item, slot)
+                    } else {
+                      assignScriptToSlotB(item, slot, s)
+                    }
+                  } else {
+                    assignScriptToSlot(item, parseInt(slot), s)
+                    fillEmptySlot(item)
+                  }
                 }
               }
               e.target.value = ""
@@ -7190,6 +7500,7 @@
         })
 
         scriptInput.addEventListener("change", async (e) => {
+          setActiveFsB(1, null)
           const files = Array.from(e.target.files || [])
           if (!files.length) return
 
@@ -7481,6 +7792,7 @@
         }
 
         function setOriginalScript2(bufferOrText, type) {
+          fsBakeCacheBuf2 = null
           originalScriptBuffer2 = bufferOrText
           currentScriptType2 = type
 
@@ -7522,6 +7834,8 @@
 
         function getModifiedScriptData2() {
           if (!originalScriptBuffer2 || !currentScriptType2) return null
+          if (fsIsBake() && currentScriptType2 === "funscript")
+            return originalScriptBuffer2
           const hasDelay =
             currentScriptType2 === "hwl"
               ? delayA2 !== 0 || delayB2 !== 0
@@ -7985,6 +8299,7 @@
           scriptInput2.click()
         })
         scriptInput2.addEventListener("change", async (e) => {
+          setActiveFsB(2, null)
           const files = Array.from(e.target.files || [])
           if (!files.length) return
           const vids = files.filter((f) => f.type.startsWith("video/"))
@@ -8077,6 +8392,7 @@
           .addEventListener("click", async () => {
             const url = urlInput.value.trim()
             if (!url) return
+            setActiveFsB(urlLoadTarget === 2 ? 2 : 1, null)
 
             try {
               const resp = await fetch(url)
@@ -8256,37 +8572,397 @@
         function modifyFunscriptText(originalText, dA, invA) {
           try {
             const data = JSON.parse(originalText)
-            if (!data.actions || data.actions.length === 0) return originalText
-            const shiftMs = dA * 1000
-            const maxTime = data.actions[data.actions.length - 1].at
-            let newActions = []
+            const processActions = (actions) => {
+              if (!actions || actions.length === 0) return actions
+              const shiftMs = dA * 1000
+              const maxTime = actions[actions.length - 1].at
+              let newActions = []
 
-            for (let i = 0; i < data.actions.length; i++) {
-              const pt = data.actions[i]
-              let newAt = pt.at + shiftMs
-              if (i === 0 && newAt < 0) newAt = 0
-              if (i === data.actions.length - 1 && newAt > maxTime)
-                newAt = maxTime
-              let pos = pt.pos
-              if (invA) pos = 100 - pos
-              if (newAt >= 0 && newAt <= maxTime)
-                newActions.push({ pos: pos, at: Math.round(newAt) })
+              for (let i = 0; i < actions.length; i++) {
+                const pt = actions[i]
+                let newAt = pt.at + shiftMs
+                if (i === 0 && newAt < 0) newAt = 0
+                if (i === actions.length - 1 && newAt > maxTime) newAt = maxTime
+                let pos = pt.pos
+                if (invA) pos = 100 - pos
+                if (newAt >= 0 && newAt <= maxTime)
+                  newActions.push({ pos: pos, at: Math.round(newAt) })
+              }
+
+              let finalActions = []
+              for (let i = 0; i < newActions.length; i++) {
+                if (i === 0 || newActions[i].at !== newActions[i - 1].at)
+                  finalActions.push(newActions[i])
+                else finalActions[finalActions.length - 1] = newActions[i]
+              }
+              return finalActions
             }
 
-            let finalActions = []
-            for (let i = 0; i < newActions.length; i++) {
-              if (i === 0 || newActions[i].at !== newActions[i - 1].at)
-                finalActions.push(newActions[i])
-              else finalActions[finalActions.length - 1] = newActions[i]
+            let modified = false
+
+            if (data.actions && data.actions.length > 0) {
+              data.actions = processActions(data.actions)
+              modified = true
             }
-            data.actions = finalActions
+
+            const isV2 =
+              data.version && String(data.version).startsWith("funscript@2")
+            if (isV2 && data.channels && typeof data.channels === "object") {
+              for (const key in data.channels) {
+                const channel = data.channels[key]
+                if (
+                  channel &&
+                  Array.isArray(channel.actions) &&
+                  channel.actions.length > 0
+                ) {
+                  channel.actions = processActions(channel.actions)
+                  modified = true
+                }
+              }
+            }
+
+            if (
+              !modified &&
+              (!data.actions || data.actions.length === 0) &&
+              (!isV2 ||
+                !data.channels ||
+                Object.keys(data.channels).length === 0)
+            ) {
+              return originalText
+            }
+
             return JSON.stringify(data)
           } catch (e) {
             return originalText
           }
         }
 
+        // ============ FUNSCRIPT PROCESSING ============
+
+        //Howl settings
+        const FS_RATE = 40
+        const FS_SIGMA = 0.2
+        const FS_VOLUME = 0.5
+        const FS_EP = 0.5
+        const FS_DS = 0.15
+        const FS_CURVE = 0.5
+        const FS_MAXS = 5.0
+
+        function fsIsBake() {
+          return saveState.fsMode !== "default"
+        }
+        function fsIsDual() {
+          return (
+            (saveState.fsMode === "motion" &&
+              saveState.fsMotionCh === "dual") ||
+            (saveState.fsMode === "simple" && saveState.fsSimpleCh === "dual")
+          )
+        }
+        function fsApplyDualClass() {
+          app.classList.toggle("fs-dual", fsIsDual())
+        }
+        function fsParseActions(text) {
+          const data = JSON.parse(text)
+          let actions = data.actions
+          const isV2 =
+            data.version && String(data.version).startsWith("funscript@2")
+          if (
+            isV2 &&
+            (!actions || actions.length < 2) &&
+            data.channels &&
+            typeof data.channels === "object"
+          ) {
+            if (data.channels.L0 && Array.isArray(data.channels.L0.actions))
+              actions = data.channels.L0.actions
+            else if (
+              data.channels.stroke &&
+              Array.isArray(data.channels.stroke.actions)
+            )
+              actions = data.channels.stroke.actions
+          }
+          return actions || []
+        }
+
+        function fsMakeKnots(actions, invert) {
+          const u = actions
+            .filter((a) => a && isFinite(a.at) && isFinite(a.pos))
+            .sort((a, b) => a.at - b.at)
+            .filter((a, i, arr) => i === 0 || a.at !== arr[i - 1].at)
+            .map((a) => ({
+              t: a.at / 1000,
+              p: Math.min(100, Math.max(0, invert ? 100 - a.pos : a.pos)) / 100,
+            }))
+          if (u.length < 2) return null
+          const n = u.length
+          const sec = new Array(n - 1)
+          const v = new Array(n)
+          for (let i = 0; i < n - 1; i++)
+            sec[i] = (u[i + 1].p - u[i].p) / (u[i + 1].t - u[i].t || 1e-9)
+          v[0] = sec[0]
+          v[n - 1] = sec[n - 2]
+          for (let i = 1; i < n - 1; i++) {
+            const mL = sec[i - 1]
+            const mR = sec[i]
+            if (mL * mR <= 0) v[i] = 0
+            else {
+              const dl = u[i].t - u[i - 1].t
+              const dr = u[i + 1].t - u[i].t
+              const c = dl + dr
+              v[i] = (3 * c) / ((c + dr) / mL + (c + dl) / mR)
+            }
+          }
+          return { u, v }
+        }
+
+        function fsSample(K, tq, shape) {
+          const { u, v } = K
+          const n = u.length
+          if (tq <= u[0].t) return [u[0].p, 0]
+          if (tq >= u[n - 1].t) return [u[n - 1].p, 0]
+          let lo = 0
+          let hi = n - 1
+          while (hi - lo > 1) {
+            const mid = (lo + hi) >> 1
+            if (u[mid].t <= tq) lo = mid
+            else hi = mid
+          }
+          const h = u[hi].t - u[lo].t
+          const s = (tq - u[lo].t) / h
+          const s2 = s * s
+          const s3 = s2 * s
+          const pL = u[lo].p + s * (u[hi].p - u[lo].p)
+          const vL = (u[hi].p - u[lo].p) / h
+          const h00 = 2 * s3 - 3 * s2 + 1
+          const h10 = s3 - 2 * s2 + s
+          const h01 = -2 * s3 + 3 * s2
+          const h11 = s3 - s2
+          const pH =
+            h00 * u[lo].p + h10 * h * v[lo] + h01 * u[hi].p + h11 * h * v[hi]
+          const vH =
+            ((6 * s2 - 6 * s) / h) * u[lo].p +
+            (3 * s2 - 4 * s + 1) * v[lo] +
+            ((-6 * s2 + 6 * s) / h) * u[hi].p +
+            (3 * s2 - 2 * s) * v[hi]
+          return [pL + shape * (pH - pL), vL + shape * (vH - vL)]
+        }
+
+        function fsChannelGrids(K, n, shape) {
+          const p = new Float64Array(n)
+          const v = new Float64Array(n)
+          const e = new Float64Array(n)
+          const raw = new Float64Array(n)
+          const amp = new Float64Array(n)
+          for (let i = 0; i < n; i++) {
+            const [pi, vi] = fsSample(K, i / FS_RATE, shape)
+            p[i] = pi
+            v[i] = vi
+            const nv = Math.min(Math.abs(vi) / FS_MAXS, 1)
+            e[i] = nv * nv
+          }
+          const step = FS_SIGMA / 4
+          const taps = 12
+          for (let i = 0; i < n; i++) {
+            let ws = 0
+            let wsum = 0
+            for (let k = -taps; k <= 0; k++) {
+              const j = i + k * 2
+              const w = Math.exp(
+                (-(k * step) * (k * step)) / (2 * FS_SIGMA * FS_SIGMA),
+              )
+              ws += w * (j >= 0 ? e[j] : 0)
+              wsum += w
+            }
+            const r = Math.sqrt(ws / wsum)
+            raw[i] = r
+            amp[i] = r < 0.005 ? 0 : Math.pow(r, 1 - FS_VOLUME)
+          }
+          return { p, v, raw, amp }
+        }
+        function fsShiftArr(a, sec) {
+          const d = Math.round(sec * FS_RATE)
+          if (!d) return a
+          const o = new Float64Array(a.length)
+          for (let i = 0; i < a.length; i++) {
+            const j = i - d
+            if (j >= 0 && j < a.length) o[i] = a[j]
+          }
+          return o
+        }
+        function fsBakeHWL(clientIdx, textA, textB) {
+          const inv =
+            clientIdx === 1 ? [invertA, invertB] : [invertA2, invertB2]
+          const del = clientIdx === 1 ? [delayA, delayB] : [delayA2, delayB2]
+          const src = [textA, fsIsDual() && textB ? textB : textA]
+          let dur = 0
+          for (const t of src) {
+            const a = fsParseActions(t)
+            if (a.length) dur = Math.max(dur, a[a.length - 1].at / 1000)
+          }
+          if (dur <= 0) return null
+          const N = Math.ceil(dur * FS_RATE)
+          const shape = saveState.fsProfile
+          const G = src.map((t, c) => {
+            const K = fsMakeKnots(fsParseActions(t), inv[c])
+            return K ? fsChannelGrids(K, N, shape) : null
+          })
+          if (!G[0] || !G[1]) return null
+          const gA = G[0]
+          const gB = G[1]
+          const ampA = new Float64Array(N)
+          const ampB = new Float64Array(N)
+          const frqA = new Float64Array(N)
+          const frqB = new Float64Array(N)
+          const core = (g, i) => g.p[i] * (1 - FS_EP) + g.raw[i] * FS_EP
+          const dir = (g, i) =>
+            Math.max(-1, Math.min(1, g.v[i] / FS_MAXS)) * FS_DS
+          const inten = (g, i) => Math.min(Math.abs(g.v[i]) / FS_MAXS, 1)
+          const simpleFreq = (g, i) => {
+            if (saveState.fsSimpleFreq === "min") return 0
+            if (saveState.fsSimpleFreq === "max") return 1
+            return inten(g, i)
+          }
+          for (let i = 0; i < N; i++) {
+            let aA, aB, fA, fB
+            if (saveState.fsMode === "motion") {
+              if (saveState.fsMotionCh === "stereo") {
+                aA = gA.amp[i] * Math.pow(1 - gA.p[i], FS_CURVE)
+                aB = gB.amp[i] * Math.pow(gB.p[i], FS_CURVE)
+                fA = core(gA, i) - dir(gA, i)
+                fB = core(gB, i) + dir(gB, i)
+              } else {
+                aA = gA.amp[i]
+                fA = core(gA, i) + dir(gA, i)
+                aB = gB.amp[i]
+                fB = core(gB, i) + dir(gB, i)
+              }
+            } else {
+              aA = gA.p[i]
+              fA = simpleFreq(gA, i)
+              aB = gB.p[i]
+              fB = simpleFreq(gB, i)
+            }
+            ampA[i] = Math.min(1, Math.max(0, aA))
+            ampB[i] = Math.min(1, Math.max(0, aB))
+            frqA[i] = Math.min(1, Math.max(0, fA))
+            frqB[i] = Math.min(1, Math.max(0, fB))
+          }
+          const sAmpA = fsShiftArr(ampA, del[0])
+          const sAmpB = fsShiftArr(ampB, del[1])
+          const sFrqA = fsShiftArr(frqA, del[0])
+          const sFrqB = fsShiftArr(frqB, del[1])
+          const buf = new ArrayBuffer(8 + N * 16)
+          const view = new DataView(buf)
+          const header = HWL_HEADER_MAGIC
+          for (let i = 0; i < 8; i++) view.setUint8(i, header.charCodeAt(i))
+          for (let i = 0; i < N; i++) {
+            const o = 8 + i * 16
+            view.setFloat32(o, sAmpA[i], true)
+            view.setFloat32(o + 4, sAmpB[i], true)
+            view.setFloat32(o + 8, sFrqA[i], true)
+            view.setFloat32(o + 12, sFrqB[i], true)
+          }
+          return buf
+        }
+        const HWL_HEADER_MAGIC = "YEAHBOI!"
+        let activeFsBFile1 = null
+        let activeFsBFile2 = null
+        let fsBText1 = null
+        let fsBText2 = null
+        let fsBakeCacheKey1 = ""
+        let fsBakeCacheBuf1 = null
+        let fsBakeCacheKey2 = ""
+        let fsBakeCacheBuf2 = null
+        function setActiveFsB(idx, file) {
+          const refresh = () => {
+            if (idx === 1) {
+              fsBakeCacheBuf1 = null
+              buildVizData()
+            } else {
+              fsBakeCacheBuf2 = null
+              buildVizData2()
+            }
+            updateMediaVisualizers()
+          }
+          if (idx === 1) {
+            activeFsBFile1 = file || null
+            fsBakeCacheBuf1 = null
+            if (file)
+              readFileAsText(file).then((t) => {
+                fsBText1 = t
+                refresh()
+              })
+            else fsBText1 = null
+          } else {
+            activeFsBFile2 = file || null
+            fsBakeCacheBuf2 = null
+            if (file)
+              readFileAsText(file).then((t) => {
+                fsBText2 = t
+                refresh()
+              })
+            else fsBText2 = null
+          }
+        }
+        function fsBakeKey(idx, textA, textB) {
+          const inv = idx === 1 ? [invertA, invertB] : [invertA2, invertB2]
+          const del = idx === 1 ? [delayA, delayB] : [delayA2, delayB2]
+          return [
+            saveState.fsMode,
+            saveState.fsMotionCh,
+            saveState.fsSimpleCh,
+            saveState.fsSimpleFreq,
+            saveState.fsProfile,
+            inv[0] ? 1 : 0,
+            inv[1] ? 1 : 0,
+            del[0],
+            del[1],
+            textA.length,
+            textB ? textB.length : -1,
+          ].join("|")
+        }
+        function fsBakeCached(idx, textA, textB) {
+          const key = fsBakeKey(idx, textA, textB)
+          if (idx === 1) {
+            if (fsBakeCacheBuf1 && fsBakeCacheKey1 === key)
+              return fsBakeCacheBuf1
+            fsBakeCacheKey1 = key
+            fsBakeCacheBuf1 = fsBakeHWL(idx, textA, textB)
+            return fsBakeCacheBuf1
+          }
+          if (fsBakeCacheBuf2 && fsBakeCacheKey2 === key) return fsBakeCacheBuf2
+          fsBakeCacheKey2 = key
+          fsBakeCacheBuf2 = fsBakeHWL(idx, textA, textB)
+          return fsBakeCacheBuf2
+        }
+
+        ;[
+          [client, 1],
+          [client2, 2],
+        ].forEach(([cl, idx]) => {
+          const origLoadFunscript = cl.loadFunscript.bind(cl)
+          cl.loadFunscript = async (title, funscript) => {
+            if (!fsIsBake()) return origLoadFunscript(title, funscript)
+            try {
+              let textB = idx === 1 ? fsBText1 : fsBText2
+              if (!textB) {
+                const bFile = idx === 1 ? activeFsBFile1 : activeFsBFile2
+                if (bFile) {
+                  textB = await readFileAsText(bFile)
+                  if (idx === 1) fsBText1 = textB
+                  else fsBText2 = textB
+                }
+              }
+              const buf = fsBakeCached(idx, funscript, textB)
+              if (buf) return cl.loadHwl(title, arrayBufferToBase64(buf))
+            } catch (err) {
+              console.error("Funscript bake failed:", err)
+            }
+            return origLoadFunscript(title, funscript)
+          }
+        })
+
         function setOriginalScript(bufferOrText, type) {
+          fsBakeCacheBuf1 = null
           originalScriptBuffer = bufferOrText
           currentScriptType = type
 
@@ -8333,6 +9009,8 @@
 
         function getModifiedScriptData() {
           if (!originalScriptBuffer || !currentScriptType) return null
+          if (fsIsBake() && currentScriptType === "funscript")
+            return originalScriptBuffer
           const hasDelay =
             currentScriptType === "hwl"
               ? delayA !== 0 || delayB !== 0
@@ -9104,12 +9782,37 @@
               }
             } else {
               const data = JSON.parse(buffer)
-              if (!data.actions || data.actions.length < 2) return null
-              const pts = data.actions
+
+              const isV2 =
+                data.version && String(data.version).startsWith("funscript@2")
+
+              let actions = data.actions
+              if (
+                isV2 &&
+                (!actions || actions.length < 2) &&
+                data.channels &&
+                typeof data.channels === "object"
+              ) {
+                if (
+                  data.channels.L0 &&
+                  Array.isArray(data.channels.L0.actions)
+                ) {
+                  actions = data.channels.L0.actions
+                } else if (
+                  data.channels.stroke &&
+                  Array.isArray(data.channels.stroke.actions)
+                ) {
+                  actions = data.channels.stroke.actions
+                }
+              }
+
+              if (!actions || actions.length < 2) return null
+              const pts = actions
                 .map((a) => ({ t: a.at / 1000, v: a.pos / 100 }))
                 .sort((a, b) => a.t - b.t)
                 .filter((p, i, arr) => i === 0 || p.t > arr[i - 1].t)
               if (pts.length < 2) return null
+
               const n = pts.length
               const sl = new Float64Array(n)
               const intervalSlope = (i, j) => {
@@ -9161,11 +9864,21 @@
         }
 
         function buildVizData() {
+          if (fsIsBake() && currentScriptType === "funscript") {
+            const buf = fsBakeCached(1, originalScriptBuffer, fsBText1)
+            vizData = buf ? buildVizDataFrom(buf, "hwl") : null
+            return
+          }
           const modified = getModifiedScriptData()
           vizData = buildVizDataFrom(modified, currentScriptType)
         }
-
         function buildVizData2() {
+          if (fsIsBake() && currentScriptType2 === "funscript") {
+            const buf = fsBakeCached(2, originalScriptBuffer2, fsBText2)
+            vizData2 = buf ? buildVizDataFrom(buf, "hwl") : null
+            layoutVizCanvas()
+            return
+          }
           const modified = getModifiedScriptData2()
           vizData2 = buildVizDataFrom(modified, currentScriptType2)
           layoutVizCanvas()
@@ -9268,9 +9981,9 @@
           return arr[i0] + (arr[i1] - arr[i0]) * f
         }
 
-        function freqColor(f) {
+        function freqColor(f, sat = 90, light = 60) {
           const c = Math.min(1, Math.max(0, f))
-          return `hsl(${210 - 210 * c}, 90%, 60%)`
+          return `hsl(${210 - 210 * c}, ${sat}%, ${light}%)`
         }
 
         // Culling
@@ -9370,16 +10083,15 @@
           if (pts.length) {
             if (cfg.freqOn && cfg.data.type === "hwl") {
               const yBase = yOf(0)
-              ctx.globalAlpha = active ? Math.max(cfg.opacity, 0.35) : 0.22
+              ctx.globalAlpha = active ? Math.max(cfg.opacity, 0.35) : 0.4
               for (let i = 1; i < pts.length; i++) {
                 const a = pts[i - 1]
                 const b = pts[i]
                 const x1 = xOf(a.t)
                 const x2 = xOf(b.t)
                 if (x2 < ox || x1 > ox + gw) continue
-                ctx.fillStyle = active
-                  ? freqColor(freqValueAt(cfg.data, cfg.ch, b.t) || 0)
-                  : "rgba(130,130,130,0.35)"
+                const fv = freqValueAt(cfg.data, cfg.ch, b.t) || 0
+                ctx.fillStyle = active ? freqColor(fv) : freqColor(fv, 35, 65)
                 ctx.beginPath()
                 ctx.moveTo(x1, yBase)
                 ctx.lineTo(x1, yOf(a.v))
@@ -10103,6 +10815,92 @@
             })
           })
         })
+
+        // --- Funscript panel ---
+        const fsPanelEl = document.getElementById("panel-funscript")
+        const fsProfileSlider = document.getElementById("fs-profile")
+        const fsProfileVal = document.getElementById("fs-profile-val")
+        const FS_MODE_DESC = {
+          default:
+            "processed by Howl. Delay and invert don't work for channel B",
+          motion: "energy-based motion processing (like in Howl)",
+          simple: "simple curve processing",
+        }
+        const FS_MOTION_DESC = {
+          stereo: "channels split by stroke position (travelling sensation)",
+          mono: "channel B is a copy of channel A",
+          dual: "each channel uses its own script",
+        }
+        const FS_SIMPLE_DESC = {
+          mono: "channel B is a copy of channel A",
+          dual: "each channel uses its own script",
+        }
+        const FS_FREQ_DESC = {
+          intensity: "frequency follows stroke intensity (0–100%)",
+          min: "constant frequency at 0%",
+          max: "constant frequency at 100%",
+        }
+        let fsDebounce = null
+        function fsSetToggles(groupId, attr, value) {
+          fsPanelEl.querySelectorAll(`#${groupId} .fs-toggle`).forEach((b) => {
+            b.classList.toggle("active", b.dataset[attr] === value)
+          })
+        }
+        function fsSyncUI() {
+          fsSetToggles("fs-mode-toggles", "fsMode", saveState.fsMode)
+          fsSetToggles("fs-motion-toggles", "fsMotion", saveState.fsMotionCh)
+          fsSetToggles("fs-simple-toggles", "fsSimple", saveState.fsSimpleCh)
+          fsSetToggles("fs-freq-toggles", "fsFreq", saveState.fsSimpleFreq)
+          document.getElementById("fs-mode-desc").textContent =
+            FS_MODE_DESC[saveState.fsMode] || ""
+          document.getElementById("fs-motion-desc").textContent =
+            FS_MOTION_DESC[saveState.fsMotionCh] || ""
+          document.getElementById("fs-simple-desc").textContent =
+            FS_SIMPLE_DESC[saveState.fsSimpleCh] || ""
+          document.getElementById("fs-freq-desc").textContent =
+            FS_FREQ_DESC[saveState.fsSimpleFreq] || ""
+          document.getElementById("fs-box-1").style.display =
+            saveState.fsMode === "default" ? "none" : ""
+          document.getElementById("fs-sub-motion").style.display =
+            saveState.fsMode === "motion" ? "" : "none"
+          document.getElementById("fs-sub-simple").style.display =
+            saveState.fsMode === "simple" ? "" : "none"
+          fsProfileSlider.value = Math.round(saveState.fsProfile * 100)
+          fsProfileVal.textContent = Math.round(saveState.fsProfile * 100)
+          fsApplyDualClass()
+        }
+        function fsCommit(resend) {
+          localStorage.setItem("saveState", JSON.stringify(saveState))
+          fsApplyDualClass()
+          renderQueue()
+          buildVizData()
+          buildVizData2()
+          updateMediaVisualizers()
+          if (!resend) return
+          clearTimeout(fsDebounce)
+          fsDebounce = setTimeout(() => {
+            if (isConnected) applyDelayAndResend().catch(() => {})
+            if (isConnected2) applyDelayAndResend2().catch(() => {})
+          }, 300)
+        }
+        fsPanelEl.addEventListener("click", (e) => {
+          const b = e.target.closest(".fs-toggle")
+          if (!b) return
+          if (b.dataset.fsMode) saveState.fsMode = b.dataset.fsMode
+          else if (b.dataset.fsMotion) saveState.fsMotionCh = b.dataset.fsMotion
+          else if (b.dataset.fsSimple) saveState.fsSimpleCh = b.dataset.fsSimple
+          else if (b.dataset.fsFreq) saveState.fsSimpleFreq = b.dataset.fsFreq
+          else if (b.dataset.fs2Mode) return
+          else return
+          fsSyncUI()
+          fsCommit(true)
+        })
+        fsProfileSlider.addEventListener("input", (e) => {
+          saveState.fsProfile = parseFloat(e.target.value) / 100
+          fsProfileVal.textContent = e.target.value
+          fsCommit(true)
+        })
+        fsSyncUI()
 
         // Hotkeys
 
@@ -10877,10 +11675,12 @@
           Digit2: "2",
           Digit3: "3",
           Digit4: "4",
+          Digit5: "5",
           Numpad1: "Num1",
           Numpad2: "Num2",
           Numpad3: "Num3",
           Numpad4: "Num4",
+          Numpad5: "Num5",
         }
 
         let hotkeyMap = {}
@@ -11065,10 +11865,12 @@
               e.code === "Digit2" ||
               e.code === "Digit3" ||
               e.code === "Digit4" ||
+              e.code === "Digit5" ||
               e.code === "Numpad1" ||
               e.code === "Numpad2" ||
               e.code === "Numpad3" ||
-              e.code === "Numpad4"
+              e.code === "Numpad4" ||
+              e.code === "Numpad5"
 
             const isPowerKey2 =
               isDoubleMode &&
