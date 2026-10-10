@@ -1974,6 +1974,41 @@
         border-color: var(--accent);
         background: rgba(0, 120, 212, 0.15);
       }
+      select.fs-role {
+        padding: 0 2px;
+        height: 18px;
+        font-size: 10px;
+        min-width: 0;
+        flex: 0 1 auto;
+        border-radius: 3px;
+      }
+      .fs-pc-grid {
+        display: flex;
+        gap: 6px;
+      }
+      .fs-pc-col {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+        min-width: 0;
+      }
+      .fs-pc-hdr {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-dim);
+        text-align: center;
+      }
+      .fs-pc-item {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .fs-pc-item label {
+        font-size: 10px;
+        min-width: 16px;
+        flex-shrink: 0;
+      }
 
       /* ===== QUEUE ROWS: CHANNEL B SCRIPT LINES ===== */
       .queue-names .queue-script-1b {
@@ -3932,8 +3967,8 @@
         <div class="funscript-wrapper">
           <!-- ===== Funscript 1.0 ===== -->
           <div class="fs-col">
-            <span class="fs-cap">Funscript 1.0</span>
             <div class="fs-row">
+              <span class="fs-cap">Funscript 1.0</span>
               <div class="fs-toggles" id="fs-mode-toggles">
                 <button class="fs-toggle" data-fs-mode="default">
                   default
@@ -4004,9 +4039,20 @@
                     <button class="fs-toggle" data-fs-freq="intensity">
                       intensity based
                     </button>
-                    <button class="fs-toggle" data-fs-freq="min">min</button>
-                    <button class="fs-toggle" data-fs-freq="max">max</button>
+                    <button class="fs-toggle" data-fs-freq="fixed">
+                      fixed
+                    </button>
                   </div>
+                  <input
+                    type="range"
+                    id="fs-freq-fixed"
+                    class="delay-slider"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="50"
+                    style="width: 110px; flex: 0 1 auto"
+                  />
                   <span class="fs-desc" id="fs-freq-desc"></span>
                 </div>
               </div>
@@ -4014,20 +4060,233 @@
           </div>
           <!-- ===== Funscript 2.0 ===== -->
           <div class="fs-col">
-            <span class="fs-cap">Funscript 2.0</span>
             <div class="fs-row">
+              <span class="fs-cap">Funscript 2.0</span>
               <div class="fs-toggles" id="fs2-mode-toggles">
-                <button class="fs-toggle active" data-fs2-mode="default">
+                <button class="fs-toggle" data-fs2-mode="default">
                   default
                 </button>
+                <button class="fs-toggle" data-fs2-mode="motion">motion</button>
+                <button class="fs-toggle" data-fs2-mode="simple">simple</button>
+                <button class="fs-toggle" data-fs2-mode="perchannel">
+                  per-channel
+                </button>
               </div>
-              <span class="fs-desc" id="fs2-mode-desc"
-                >processed by Howl. Delay and invert don't work for channel
-                B</span
-              >
+              <span class="fs-desc" id="fs2-mode-desc"></span>
             </div>
-            <div class="fs-box panel-box">
-              <span class="fs-dim">Coming soon. Probably</span>
+            <div class="fs-box panel-box" id="fs-box-2">
+              <div class="fs-sub" id="fs2-sub-motion" style="display: none">
+                <div class="fs-row">
+                  <div class="fs-toggles" id="fs2-motion-toggles">
+                    <button class="fs-toggle" data-fs2-motion="stereo">
+                      stereo
+                    </button>
+                    <button class="fs-toggle" data-fs2-motion="mono">
+                      mono
+                    </button>
+                    <button class="fs-toggle" data-fs2-motion="dual">
+                      dual-script
+                    </button>
+                  </div>
+                  <span class="fs-desc" id="fs2-motion-desc"></span>
+                </div>
+                <div class="fs-row">
+                  <label
+                    style="
+                      min-width: 96px;
+                      font-size: 11px;
+                      white-space: nowrap;
+                    "
+                  >
+                    Motion profile:
+                    <span id="fs2-profile-val" style="color: var(--text-main)"
+                      >60</span
+                    >%
+                  </label>
+                  <input
+                    type="range"
+                    id="fs2-profile"
+                    class="delay-slider"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value="60"
+                    style="width: 130px; flex: 0 1 auto"
+                  />
+                </div>
+              </div>
+              <div class="fs-sub" id="fs2-sub-simple" style="display: none">
+                <div class="fs-row">
+                  <div class="fs-toggles" id="fs2-simple-toggles">
+                    <button class="fs-toggle" data-fs2-simple="mono">
+                      mono
+                    </button>
+                    <button class="fs-toggle" data-fs2-simple="dual">
+                      dual-script
+                    </button>
+                  </div>
+                  <span class="fs-desc" id="fs2-simple-desc"></span>
+                </div>
+                <div class="fs-row">
+                  <label style="font-size: 11px; white-space: nowrap"
+                    >frequency:</label
+                  >
+                  <div class="fs-toggles" id="fs2-freq-toggles">
+                    <button class="fs-toggle" data-fs2-freq="intensity">
+                      intensity based
+                    </button>
+                    <button class="fs-toggle" data-fs2-freq="fixed">
+                      fixed
+                    </button>
+                  </div>
+                  <input
+                    type="range"
+                    id="fs2-freq-fixed"
+                    class="delay-slider"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="50"
+                    style="width: 110px; flex: 0 1 auto"
+                  />
+                  <span class="fs-desc" id="fs2-freq-desc"></span>
+                </div>
+              </div>
+              <div class="fs-sub" id="fs2-sub-perchannel" style="display: none">
+                <div class="fs-row">
+                  <label
+                    style="
+                      min-width: 96px;
+                      font-size: 11px;
+                      white-space: nowrap;
+                    "
+                  >
+                    Motion profile:
+                    <span
+                      id="fs2-pc-profile-val"
+                      style="color: var(--text-main)"
+                      >60</span
+                    >%
+                  </label>
+                  <input
+                    type="range"
+                    id="fs2-pc-profile"
+                    class="delay-slider"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value="60"
+                    style="width: 110px; flex: 0 1 auto"
+                  />
+                  <span class="fs-desc"
+                    >if only one amplitude channel is active, second is it's
+                    copy</span
+                  >
+                </div>
+                <div class="fs-pc-grid">
+                  <div class="fs-pc-col">
+                    <div class="fs-pc-item">
+                      <label>L0</label>
+                      <select id="fs2-role-L0" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                    <div class="fs-pc-item">
+                      <label>L1</label>
+                      <select id="fs2-role-L1" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="motion">motion calc</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                    <div class="fs-pc-item">
+                      <label>L2</label>
+                      <select id="fs2-role-L2" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="motion">motion calc</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="fs-pc-col">
+                    <div class="fs-pc-item">
+                      <label>R0</label>
+                      <select id="fs2-role-R0" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="motion">motion calc</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                    <div class="fs-pc-item">
+                      <label>R1</label>
+                      <select id="fs2-role-R1" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="motion">motion calc</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                    <div class="fs-pc-item">
+                      <label>R2</label>
+                      <select id="fs2-role-R2" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="motion">motion calc</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="fs-pc-col">
+                    <div class="fs-pc-item">
+                      <label>V0</label>
+                      <select id="fs2-role-V0" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                    <div class="fs-pc-item">
+                      <label>V1</label>
+                      <select id="fs2-role-V1" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="fs-pc-col">
+                    <div class="fs-pc-item">
+                      <label>A0</label>
+                      <select id="fs2-role-A0" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                    <div class="fs-pc-item">
+                      <label>A1</label>
+                      <select id="fs2-role-A1" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                    <div class="fs-pc-item">
+                      <label>A2</label>
+                      <select id="fs2-role-A2" class="fs-role">
+                        <option value="none">none</option>
+                        <option value="ampA">amplitude A</option>
+                        <option value="ampB">amplitude B</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -4760,8 +5019,29 @@
           fsMotionCh: "stereo",
           fsSimpleCh: "mono",
           fsSimpleFreq: "intensity",
+          fsFixedFreq: 0.5,
           fsProfile: 0.6,
-
+          fs2Mode: "default",
+          fs2MotionCh: "stereo",
+          fs2SimpleCh: "mono",
+          fs2ChannelRoles: {
+            L0: "ampA",
+            L1: "motion",
+            L2: "motion",
+            R0: "motion",
+            R1: "motion",
+            R2: "motion",
+            V0: "none",
+            V1: "none",
+            A0: "none",
+            A1: "none",
+            A2: "none",
+          },
+          fs2SimpleFreq: "intensity",
+          fs2FixedFreq: 0.5,
+          fs2Profile: 0.6,
+          fs2SimpleCh: "mono",
+          fs2PcProfile: 0.6,
           heatmap: false,
         }
 
@@ -7834,7 +8114,10 @@
 
         function getModifiedScriptData2() {
           if (!originalScriptBuffer2 || !currentScriptType2) return null
-          if (fsIsBake() && currentScriptType2 === "funscript")
+          if (
+            fsIsBakeFor(originalScriptBuffer) &&
+            currentScriptType2 === "funscript"
+          )
             return originalScriptBuffer2
           const hasDelay =
             currentScriptType2 === "hwl"
@@ -8647,15 +8930,30 @@
         const FS_DS = 0.15
         const FS_CURVE = 0.5
         const FS_MAXS = 5.0
-
-        function fsIsBake() {
-          return saveState.fsMode !== "default"
+        const FS_MAG = 80.0
+        function fsTextIsV2(text) {
+          try {
+            const d = JSON.parse(text)
+            return !!(d.version && String(d.version).startsWith("funscript@2"))
+          } catch (e) {
+            return false
+          }
+        }
+        function fsModeForText(text) {
+          return fsTextIsV2(text) ? saveState.fs2Mode : saveState.fsMode
+        }
+        function fsIsBakeFor(text) {
+          return typeof text === "string" && fsModeForText(text) !== "default"
         }
         function fsIsDual() {
           return (
             (saveState.fsMode === "motion" &&
               saveState.fsMotionCh === "dual") ||
-            (saveState.fsMode === "simple" && saveState.fsSimpleCh === "dual")
+            (saveState.fsMode === "simple" &&
+              saveState.fsSimpleCh === "dual") ||
+            (saveState.fs2Mode === "motion" &&
+              saveState.fs2MotionCh === "dual") ||
+            (saveState.fs2Mode === "simple" && saveState.fs2SimpleCh === "dual")
           )
         }
         function fsApplyDualClass() {
@@ -8717,8 +9015,8 @@
         function fsSample(K, tq, shape) {
           const { u, v } = K
           const n = u.length
-          if (tq <= u[0].t) return [u[0].p, 0]
-          if (tq >= u[n - 1].t) return [u[n - 1].p, 0]
+          if (tq <= u[0].t) return [u[0].p, 0, 0]
+          if (tq >= u[n - 1].t) return [u[n - 1].p, 0, 0]
           let lo = 0
           let hi = n - 1
           while (hi - lo > 1) {
@@ -8743,22 +9041,31 @@
             (3 * s2 - 4 * s + 1) * v[lo] +
             ((-6 * s2 + 6 * s) / h) * u[hi].p +
             (3 * s2 - 2 * s) * v[hi]
-          return [pL + shape * (pH - pL), vL + shape * (vH - vL)]
+          const aH =
+            (((12 * s - 6) / h) * u[lo].p +
+              (6 * s - 4) * v[lo] +
+              ((-12 * s + 6) / h) * u[hi].p +
+              (6 * s - 2) * v[hi]) /
+            h
+          return [pL + shape * (pH - pL), vL + shape * (vH - vL), shape * aH]
         }
 
-        function fsChannelGrids(K, n, shape) {
+        function fsAxisGrids(K, n, shape) {
           const p = new Float64Array(n)
           const v = new Float64Array(n)
-          const e = new Float64Array(n)
-          const raw = new Float64Array(n)
-          const amp = new Float64Array(n)
+          const a = new Float64Array(n)
           for (let i = 0; i < n; i++) {
-            const [pi, vi] = fsSample(K, i / FS_RATE, shape)
+            const [pi, vi, ai] = fsSample(K, i / FS_RATE, shape)
             p[i] = pi
             v[i] = vi
-            const nv = Math.min(Math.abs(vi) / FS_MAXS, 1)
-            e[i] = nv * nv
+            a[i] = ai
           }
+          return { p, v, a }
+        }
+        function fsSmoothAmp(e) {
+          const n = e.length
+          const raw = new Float64Array(n)
+          const amp = new Float64Array(n)
           const step = FS_SIGMA / 4
           const taps = 12
           for (let i = 0; i < n; i++) {
@@ -8776,7 +9083,69 @@
             raw[i] = r
             amp[i] = r < 0.005 ? 0 : Math.pow(r, 1 - FS_VOLUME)
           }
-          return { p, v, raw, amp }
+          return { raw, amp }
+        }
+        function fsChannelGrids(K, n, shape) {
+          const g = fsAxisGrids(K, n, shape)
+          const e = new Float64Array(n)
+          for (let i = 0; i < n; i++) {
+            const nv = Math.min(Math.abs(g.v[i]) / FS_MAXS, 1)
+            e[i] = nv * nv
+          }
+          const sm = fsSmoothAmp(e)
+          return { p: g.p, v: g.v, a: g.a, raw: sm.raw, amp: sm.amp }
+        }
+        function fsParseAxes(text) {
+          const data = JSON.parse(text)
+          const axes = {}
+          const nameMap = {
+            surge: "L1",
+            sway: "L2",
+            twist: "R0",
+            roll: "R1",
+            pitch: "R2",
+            vibe: "V0",
+            pump: "V1",
+            valve: "A0",
+            suck: "A1",
+            lube: "A2",
+          }
+          const supported = [
+            "L1",
+            "L2",
+            "R0",
+            "R1",
+            "R2",
+            "V0",
+            "V1",
+            "A0",
+            "A1",
+            "A2",
+          ]
+          if (Array.isArray(data.actions) && data.actions.length)
+            axes.L0 = data.actions
+          if (Array.isArray(data.axes)) {
+            for (const ax of data.axes) {
+              if (ax && supported.includes(ax.id) && ax.actions?.length)
+                axes[ax.id] = ax.actions
+            }
+          }
+          if (data.channels && typeof data.channels === "object") {
+            for (const key in data.channels) {
+              const id = nameMap[key] || key
+              const ch = data.channels[key]
+              if (
+                ch &&
+                Array.isArray(ch.actions) &&
+                ch.actions.length &&
+                (supported.includes(id) || id === "L0" || id === "stroke")
+              ) {
+                if (id === "stroke") axes.L0 = axes.L0 || ch.actions
+                else axes[id] = ch.actions
+              }
+            }
+          }
+          return axes
         }
         function fsShiftArr(a, sec) {
           const d = Math.round(sec * FS_RATE)
@@ -8788,10 +9157,180 @@
           }
           return o
         }
+
+        function fsFinishHWL(ampA, ampB, frqA, frqB, del) {
+          const N = ampA.length
+          const sAmpA = fsShiftArr(ampA, del[0])
+          const sAmpB = fsShiftArr(ampB, del[1])
+          const sFrqA = fsShiftArr(frqA, del[0])
+          const sFrqB = fsShiftArr(frqB, del[1])
+          const buf = new ArrayBuffer(8 + N * 16)
+          const view = new DataView(buf)
+          const header = HWL_HEADER_MAGIC
+          for (let i = 0; i < 8; i++) view.setUint8(i, header.charCodeAt(i))
+          for (let i = 0; i < N; i++) {
+            const o = 8 + i * 16
+            view.setFloat32(o, sAmpA[i], true)
+            view.setFloat32(o + 4, sAmpB[i], true)
+            view.setFloat32(o + 8, sFrqA[i], true)
+            view.setFloat32(o + 12, sFrqB[i], true)
+          }
+          return buf
+        }
+
         function fsBakeHWL(clientIdx, textA, textB) {
           const inv =
             clientIdx === 1 ? [invertA, invertB] : [invertA2, invertB2]
           const del = clientIdx === 1 ? [delayA, delayB] : [delayA2, delayB2]
+          const v2A = fsTextIsV2(textA)
+          const mode = v2A ? saveState.fs2Mode : saveState.fsMode
+          const motionCh = v2A ? saveState.fs2MotionCh : saveState.fsMotionCh
+          const simpleCh = v2A ? saveState.fs2SimpleCh : saveState.fsSimpleCh
+          const simpleFreqMode = v2A
+            ? saveState.fs2SimpleFreq
+            : saveState.fsSimpleFreq
+          const fixedFreq = v2A ? saveState.fs2FixedFreq : saveState.fsFixedFreq
+          const shape = v2A ? saveState.fs2Profile : saveState.fsProfile
+          // Funscript 2.0 motion
+          if (v2A && (mode === "motion" || mode === "perchannel")) {
+            const stereo = mode === "motion" && motionCh === "stereo"
+            const dual = mode === "motion" && motionCh === "dual"
+            const perCh = mode === "perchannel"
+            const shape2 = perCh ? saveState.fs2PcProfile : shape
+            const axesA = fsParseAxes(textA)
+            const axesB = dual ? fsParseAxes(textB || textA) : axesA
+            if (stereo && !axesA.L0) return null
+            let dur2 = 0
+            for (const id in { ...axesA, ...axesB }) {
+              const arr = axesA[id] || axesB[id]
+              if (arr && arr.length)
+                dur2 = Math.max(dur2, arr[arr.length - 1].at / 1000)
+            }
+            if (dur2 <= 0) return null
+            const N = Math.ceil(dur2 * FS_RATE)
+            const ampA = new Float64Array(N)
+            const ampB = new Float64Array(N)
+            const frqA = new Float64Array(N)
+            const frqB = new Float64Array(N)
+            let specA = null
+            let specB = null
+            if (perCh) {
+              const roles = saveState.fs2ChannelRoles || {}
+              const ids = Object.keys(axesA)
+              const roleOf = (id) => {
+                const r = roles[id]
+                if (id === "L0")
+                  return r === "ampA" || r === "ampB" ? r : "none"
+                if (id.startsWith("V") || id.startsWith("A"))
+                  return r === "ampA" || r === "ampB" ? r : "none"
+                return r || "none"
+              }
+              const mIds = ids.filter((id) => roleOf(id) === "motion")
+              const dedA = ids.find((id) => roleOf(id) === "ampA")
+              const dedB = ids.find((id) => roleOf(id) === "ampB")
+              if (!dedA && !dedB) {
+                const base = mIds.length ? mIds : ids
+                specA = { ids: base, ampId: null }
+                specB = { ids: base, ampId: null }
+              } else {
+                specA = { ids: mIds, ampId: dedA || null }
+                specB = { ids: mIds, ampId: dedB || null }
+                if (!specA.ampId && !specB.ampId) {
+                  const base = mIds.length ? mIds : ids
+                  specA = { ids: base, ampId: null }
+                  specB = { ids: base, ampId: null }
+                }
+                if (!specA.ampId) specA = { ...specB }
+                if (!specB.ampId) specB = { ...specA }
+              }
+            }
+            for (let c = 0; c < 2; c++) {
+              const axes = dual ? (c === 0 ? axesA : axesB) : axesA
+              const ids = Object.keys(axes)
+              const G = {}
+              for (const id of ids) {
+                const K = fsMakeKnots(axes[id], inv[c])
+                if (K) G[id] = fsAxisGrids(K, N, shape2)
+              }
+              const spec = perCh ? (c === 0 ? specA : specB) : null
+              const ampId = spec ? spec.ampId : null
+              const useIds = (perCh ? spec.ids : ids).filter((id) => G[id])
+              if (!useIds.length && !(ampId && G[ampId])) return null
+              const refId = useIds.includes("L0")
+                ? "L0"
+                : useIds.length
+                  ? useIds[0]
+                  : ampId && G[ampId]
+                    ? ampId
+                    : null
+              const e = new Float64Array(N)
+              for (let i = 0; i < N; i++) {
+                let s = 0
+                for (const id of useIds) {
+                  const nv = Math.min(Math.abs(G[id].v[i]) / FS_MAXS, 1)
+                  s += nv * nv
+                }
+                e[i] = s
+              }
+              const sm = fsSmoothAmp(e)
+              for (let i = 0; i < N; i++) {
+                const pos = G[refId].p[i]
+                const raw = sm.raw[i]
+                const amp = sm.amp[i]
+                let f = 0
+                if (raw > 0) {
+                  const dir =
+                    Math.max(-1, Math.min(1, G[refId].v[i] / FS_MAXS)) * FS_DS
+                  const core = pos * (1 - FS_EP) + raw * FS_EP
+                  f = stereo ? (c === 0 ? core - dir : core + dir) : core + dir
+                  if (useIds.includes("R0"))
+                    f += Math.min(Math.abs(G.R0.v[i]) / FS_MAXS, 1) * 0.5
+                  if (useIds.includes("R1")) {
+                    const spread = Math.abs(G.R1.p[i] - 0.5) * 0.4
+                    f += stereo
+                      ? c === 0
+                        ? spread * 0.2
+                        : -spread * 0.8
+                      : -spread * 0.3
+                  }
+                  if (useIds.includes("R2")) {
+                    const off = (G.R2.p[i] - 0.5) * 0.4
+                    if (stereo) f += c === 0 ? off : -off
+                  }
+                  let accSq = 0
+                  if (useIds.includes("L1"))
+                    accSq += Math.pow(G.L1.a[i] / FS_MAG, 2)
+                  if (useIds.includes("L2"))
+                    accSq += Math.pow(G.L2.a[i] / FS_MAG, 2)
+                  if (accSq > 0) f -= Math.min(1, Math.sqrt(accSq)) * 0.4
+                }
+                f = Math.min(1, Math.max(0, f))
+                let a
+                if (ampId && G[ampId]) {
+                  a = G[ampId].p[i]
+                } else {
+                  a = amp
+                }
+                a = Math.min(
+                  1,
+                  Math.max(
+                    0,
+                    stereo
+                      ? a * Math.pow(c === 0 ? 1 - pos : pos, FS_CURVE)
+                      : a,
+                  ),
+                )
+                if (c === 0) {
+                  ampA[i] = a
+                  frqA[i] = f
+                } else {
+                  ampB[i] = a
+                  frqB[i] = f
+                }
+              }
+            }
+            return fsFinishHWL(ampA, ampB, frqA, frqB, del)
+          }
           const src = [textA, fsIsDual() && textB ? textB : textA]
           let dur = 0
           for (const t of src) {
@@ -8800,7 +9339,6 @@
           }
           if (dur <= 0) return null
           const N = Math.ceil(dur * FS_RATE)
-          const shape = saveState.fsProfile
           const G = src.map((t, c) => {
             const K = fsMakeKnots(fsParseActions(t), inv[c])
             return K ? fsChannelGrids(K, N, shape) : null
@@ -8817,14 +9355,13 @@
             Math.max(-1, Math.min(1, g.v[i] / FS_MAXS)) * FS_DS
           const inten = (g, i) => Math.min(Math.abs(g.v[i]) / FS_MAXS, 1)
           const simpleFreq = (g, i) => {
-            if (saveState.fsSimpleFreq === "min") return 0
-            if (saveState.fsSimpleFreq === "max") return 1
+            if (simpleFreqMode === "fixed") return fixedFreq
             return inten(g, i)
           }
           for (let i = 0; i < N; i++) {
             let aA, aB, fA, fB
-            if (saveState.fsMode === "motion") {
-              if (saveState.fsMotionCh === "stereo") {
+            if (mode === "motion") {
+              if (motionCh === "stereo") {
                 aA = gA.amp[i] * Math.pow(1 - gA.p[i], FS_CURVE)
                 aB = gB.amp[i] * Math.pow(gB.p[i], FS_CURVE)
                 fA = core(gA, i) - dir(gA, i)
@@ -8846,22 +9383,7 @@
             frqA[i] = Math.min(1, Math.max(0, fA))
             frqB[i] = Math.min(1, Math.max(0, fB))
           }
-          const sAmpA = fsShiftArr(ampA, del[0])
-          const sAmpB = fsShiftArr(ampB, del[1])
-          const sFrqA = fsShiftArr(frqA, del[0])
-          const sFrqB = fsShiftArr(frqB, del[1])
-          const buf = new ArrayBuffer(8 + N * 16)
-          const view = new DataView(buf)
-          const header = HWL_HEADER_MAGIC
-          for (let i = 0; i < 8; i++) view.setUint8(i, header.charCodeAt(i))
-          for (let i = 0; i < N; i++) {
-            const o = 8 + i * 16
-            view.setFloat32(o, sAmpA[i], true)
-            view.setFloat32(o + 4, sAmpB[i], true)
-            view.setFloat32(o + 8, sFrqA[i], true)
-            view.setFloat32(o + 12, sFrqB[i], true)
-          }
-          return buf
+          return fsFinishHWL(ampA, ampB, frqA, frqB, del)
         }
         const HWL_HEADER_MAGIC = "YEAHBOI!"
         let activeFsBFile1 = null
@@ -8911,7 +9433,18 @@
             saveState.fsMotionCh,
             saveState.fsSimpleCh,
             saveState.fsSimpleFreq,
+            saveState.fsFixedFreq,
             saveState.fsProfile,
+            saveState.fs2Mode,
+            saveState.fs2MotionCh,
+            saveState.fs2SimpleCh,
+            JSON.stringify(saveState.fs2ChannelRoles || {}),
+            saveState.fs2SimpleFreq,
+            saveState.fs2FixedFreq,
+            saveState.fs2Profile,
+            saveState.fs2PcProfile,
+            saveState.fs2SimpleCh,
+            JSON.stringify(saveState.fs2ChannelRoles || {}),
             inv[0] ? 1 : 0,
             inv[1] ? 1 : 0,
             del[0],
@@ -8941,7 +9474,8 @@
         ].forEach(([cl, idx]) => {
           const origLoadFunscript = cl.loadFunscript.bind(cl)
           cl.loadFunscript = async (title, funscript) => {
-            if (!fsIsBake()) return origLoadFunscript(title, funscript)
+            if (!fsIsBakeFor(funscript))
+              return origLoadFunscript(title, funscript)
             try {
               let textB = idx === 1 ? fsBText1 : fsBText2
               if (!textB) {
@@ -9009,7 +9543,10 @@
 
         function getModifiedScriptData() {
           if (!originalScriptBuffer || !currentScriptType) return null
-          if (fsIsBake() && currentScriptType === "funscript")
+          if (
+            fsIsBakeFor(originalScriptBuffer) &&
+            currentScriptType === "funscript"
+          )
             return originalScriptBuffer
           const hasDelay =
             currentScriptType === "hwl"
@@ -9864,7 +10401,10 @@
         }
 
         function buildVizData() {
-          if (fsIsBake() && currentScriptType === "funscript") {
+          if (
+            fsIsBakeFor(originalScriptBuffer) &&
+            currentScriptType === "funscript"
+          ) {
             const buf = fsBakeCached(1, originalScriptBuffer, fsBText1)
             vizData = buf ? buildVizDataFrom(buf, "hwl") : null
             return
@@ -9873,7 +10413,10 @@
           vizData = buildVizDataFrom(modified, currentScriptType)
         }
         function buildVizData2() {
-          if (fsIsBake() && currentScriptType2 === "funscript") {
+          if (
+            fsIsBakeFor(originalScriptBuffer) &&
+            currentScriptType2 === "funscript"
+          ) {
             const buf = fsBakeCached(2, originalScriptBuffer2, fsBText2)
             vizData2 = buf ? buildVizDataFrom(buf, "hwl") : null
             layoutVizCanvas()
@@ -10820,6 +11363,10 @@
         const fsPanelEl = document.getElementById("panel-funscript")
         const fsProfileSlider = document.getElementById("fs-profile")
         const fsProfileVal = document.getElementById("fs-profile-val")
+        const fsFreqFixedSlider = document.getElementById("fs-freq-fixed")
+        const fs2ProfileSlider = document.getElementById("fs2-profile")
+        const fs2ProfileVal = document.getElementById("fs2-profile-val")
+        const fs2FreqFixedSlider = document.getElementById("fs2-freq-fixed")
         const FS_MODE_DESC = {
           default:
             "processed by Howl. Delay and invert don't work for channel B",
@@ -10837,8 +11384,65 @@
         }
         const FS_FREQ_DESC = {
           intensity: "frequency follows stroke intensity (0–100%)",
-          min: "constant frequency at 0%",
-          max: "constant frequency at 100%",
+        }
+        function fsFreqDescText() {
+          if (saveState.fsSimpleFreq === "fixed")
+            return `constant frequency at ${Math.round(
+              saveState.fsFixedFreq * 100,
+            )}%`
+          return FS_FREQ_DESC[saveState.fsSimpleFreq] || ""
+        }
+        const FS2_MODE_DESC = {
+          default:
+            "processed by Howl. Delay and invert don't work for channel B",
+          motion: "motion-based processing (like in Howl)",
+          simple: "simple processing (L0 curve)",
+          perchannel: "route each axis. all none = default mono",
+        }
+        const FS2_MOTION_DESC = {
+          stereo: "multi-axis: L0 pans, extra axes shape frequency",
+          mono: "channel B is a copy of channel A",
+          dual: "each channel uses its own script",
+        }
+        const FS2_SIMPLE_DESC = {
+          mono: "L0 curve becomes amplitude. channel B is a copy of channel A",
+          dual: "each channel uses its own script's L0 curve",
+        }
+        const FS2_CHANNEL_IDS = [
+          "L0",
+          "L1",
+          "L2",
+          "R0",
+          "R1",
+          "R2",
+          "V0",
+          "V1",
+          "A0",
+          "A1",
+          "A2",
+        ]
+        const FS2_CHANNEL_LABELS = {
+          L0: "L0",
+          L1: "L1",
+          L2: "L2",
+          R0: "R0",
+          R1: "R1",
+          R2: "R2",
+          V0: "V0",
+          V1: "V1",
+          A0: "A0",
+          A1: "A1",
+          A2: "A2",
+        }
+        const FS2_FREQ_DESC = {
+          intensity: "frequency follows stroke intensity (0–100%)",
+        }
+        function fs2FreqDescText() {
+          if (saveState.fs2SimpleFreq === "fixed")
+            return `constant frequency at ${Math.round(
+              saveState.fs2FixedFreq * 100,
+            )}%`
+          return FS2_FREQ_DESC[saveState.fs2SimpleFreq] || ""
         }
         let fsDebounce = null
         function fsSetToggles(groupId, attr, value) {
@@ -10851,22 +11455,61 @@
           fsSetToggles("fs-motion-toggles", "fsMotion", saveState.fsMotionCh)
           fsSetToggles("fs-simple-toggles", "fsSimple", saveState.fsSimpleCh)
           fsSetToggles("fs-freq-toggles", "fsFreq", saveState.fsSimpleFreq)
+          fsSetToggles("fs2-mode-toggles", "fs2Mode", saveState.fs2Mode)
+          fsSetToggles("fs2-motion-toggles", "fs2Motion", saveState.fs2MotionCh)
+          fsSetToggles("fs2-freq-toggles", "fs2Freq", saveState.fs2SimpleFreq)
+          fsSetToggles("fs2-simple-toggles", "fs2Simple", saveState.fs2SimpleCh)
+          fsSetToggles("fs2-simple-toggles", "fs2Simple", saveState.fs2SimpleCh)
           document.getElementById("fs-mode-desc").textContent =
             FS_MODE_DESC[saveState.fsMode] || ""
           document.getElementById("fs-motion-desc").textContent =
             FS_MOTION_DESC[saveState.fsMotionCh] || ""
           document.getElementById("fs-simple-desc").textContent =
             FS_SIMPLE_DESC[saveState.fsSimpleCh] || ""
-          document.getElementById("fs-freq-desc").textContent =
-            FS_FREQ_DESC[saveState.fsSimpleFreq] || ""
+          document.getElementById("fs-freq-desc").textContent = fsFreqDescText()
+          document.getElementById("fs2-mode-desc").textContent =
+            FS2_MODE_DESC[saveState.fs2Mode] || ""
+          document.getElementById("fs2-motion-desc").textContent =
+            FS2_MOTION_DESC[saveState.fs2MotionCh] || ""
+          document.getElementById("fs2-simple-desc").textContent =
+            FS2_SIMPLE_DESC[saveState.fs2SimpleCh] || ""
+          document.getElementById("fs2-freq-desc").textContent =
+            fs2FreqDescText()
           document.getElementById("fs-box-1").style.display =
             saveState.fsMode === "default" ? "none" : ""
           document.getElementById("fs-sub-motion").style.display =
             saveState.fsMode === "motion" ? "" : "none"
           document.getElementById("fs-sub-simple").style.display =
             saveState.fsMode === "simple" ? "" : "none"
+          document.getElementById("fs-box-2").style.display =
+            saveState.fs2Mode === "default" ? "none" : ""
+          document.getElementById("fs2-sub-motion").style.display =
+            saveState.fs2Mode === "motion" ? "" : "none"
+          document.getElementById("fs2-sub-simple").style.display =
+            saveState.fs2Mode === "simple" ? "" : "none"
+          document.getElementById("fs2-sub-perchannel").style.display =
+            saveState.fs2Mode === "perchannel" ? "" : "none"
+          document.getElementById("fs2-pc-profile").value = Math.round(
+            saveState.fs2PcProfile * 100,
+          )
+          document.getElementById("fs2-pc-profile-val").textContent =
+            Math.round(saveState.fs2PcProfile * 100)
+          FS2_CHANNEL_IDS.forEach((id) => {
+            const sel = document.getElementById("fs2-role-" + id)
+            if (sel) {
+              const val = (saveState.fs2ChannelRoles || {})[id] || "none"
+              const valid = Array.from(sel.options).some((o) => o.value === val)
+              sel.value = valid ? val : "none"
+            }
+          })
           fsProfileSlider.value = Math.round(saveState.fsProfile * 100)
           fsProfileVal.textContent = Math.round(saveState.fsProfile * 100)
+          fsFreqFixedSlider.value = Math.round(saveState.fsFixedFreq * 100)
+          fsFreqFixedSlider.disabled = saveState.fsSimpleFreq !== "fixed"
+          fs2ProfileSlider.value = Math.round(saveState.fs2Profile * 100)
+          fs2ProfileVal.textContent = Math.round(saveState.fs2Profile * 100)
+          fs2FreqFixedSlider.value = Math.round(saveState.fs2FixedFreq * 100)
+          fs2FreqFixedSlider.disabled = saveState.fs2SimpleFreq !== "fixed"
           fsApplyDualClass()
         }
         function fsCommit(resend) {
@@ -10890,7 +11533,13 @@
           else if (b.dataset.fsMotion) saveState.fsMotionCh = b.dataset.fsMotion
           else if (b.dataset.fsSimple) saveState.fsSimpleCh = b.dataset.fsSimple
           else if (b.dataset.fsFreq) saveState.fsSimpleFreq = b.dataset.fsFreq
-          else if (b.dataset.fs2Mode) return
+          else if (b.dataset.fs2Mode) saveState.fs2Mode = b.dataset.fs2Mode
+          else if (b.dataset.fs2Motion)
+            saveState.fs2MotionCh = b.dataset.fs2Motion
+          else if (b.dataset.fs2Simple)
+            saveState.fs2SimpleCh = b.dataset.fs2Simple
+          else if (b.dataset.fs2Freq)
+            saveState.fs2SimpleFreq = b.dataset.fs2Freq
           else return
           fsSyncUI()
           fsCommit(true)
@@ -10900,6 +11549,76 @@
           fsProfileVal.textContent = e.target.value
           fsCommit(true)
         })
+        fsFreqFixedSlider.addEventListener("input", (e) => {
+          saveState.fsFixedFreq = parseFloat(e.target.value) / 100
+          document.getElementById("fs-freq-desc").textContent = fsFreqDescText()
+          fsCommit(true)
+        })
+        fs2ProfileSlider.addEventListener("input", (e) => {
+          saveState.fs2Profile = parseFloat(e.target.value) / 100
+          fs2ProfileVal.textContent = e.target.value
+          fsCommit(true)
+        })
+        fs2ProfileSlider.addEventListener("input", (e) => {
+          saveState.fs2Profile = parseFloat(e.target.value) / 100
+          fs2ProfileVal.textContent = e.target.value
+          fsCommit(true)
+        })
+        fs2FreqFixedSlider.addEventListener("input", (e) => {
+          saveState.fs2FixedFreq = parseFloat(e.target.value) / 100
+          document.getElementById("fs2-freq-desc").textContent =
+            fs2FreqDescText()
+          fsCommit(true)
+        })
+        document
+          .getElementById("fs2-pc-profile")
+          .addEventListener("input", (e) => {
+            saveState.fs2PcProfile = parseFloat(e.target.value) / 100
+            document.getElementById("fs2-pc-profile-val").textContent =
+              e.target.value
+            fsCommit(true)
+          })
+        FS2_CHANNEL_IDS.forEach((id) => {
+          const sel = document.getElementById("fs2-role-" + id)
+          if (!sel) return
+          sel.addEventListener("change", () => {
+            if (!saveState.fs2ChannelRoles)
+              saveState.fs2ChannelRoles = {
+                ...defaultSaveState.fs2ChannelRoles,
+              }
+            const roles = saveState.fs2ChannelRoles
+            const val = sel.value
+            if (val === "ampA" || val === "ampB") {
+              for (const other of FS2_CHANNEL_IDS) {
+                if (other !== id && roles[other] === val) roles[other] = "none"
+              }
+            }
+            roles[id] = val
+            fsSyncUI()
+            fsCommit(true)
+          })
+        })
+        if (saveState.fs2MotionCh === "perchannel") {
+          saveState.fs2Mode = "perchannel"
+          saveState.fs2MotionCh = "stereo"
+        }
+        if (
+          !["default", "motion", "simple", "perchannel"].includes(
+            saveState.fs2Mode,
+          )
+        )
+          saveState.fs2Mode = "default"
+        if (!saveState.fs2ChannelRoles) saveState.fs2ChannelRoles = {}
+        for (const id of FS2_CHANNEL_IDS) {
+          if (!(id in saveState.fs2ChannelRoles)) {
+            saveState.fs2ChannelRoles[id] =
+              id === "L0"
+                ? "ampA"
+                : id.startsWith("L") || id.startsWith("R")
+                  ? "motion"
+                  : "none"
+          }
+        }
         fsSyncUI()
 
         // Hotkeys
