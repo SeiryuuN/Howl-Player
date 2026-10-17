@@ -1932,6 +1932,7 @@
         flex-direction: column;
         gap: 4px;
         min-height: 0;
+        height: 95px;
       }
       .fs-desc {
         font-size: 11px;
@@ -4018,6 +4019,20 @@
                     style="width: 130px; flex: 0 1 auto"
                   />
                 </div>
+                <div class="fs-row">
+                  <label style="font-size: 11px; white-space: nowrap"
+                    >Invert
+                  </label>
+                  <div class="fs-toggles" id="fs-invert-toggles">
+                    <button class="fs-toggle" data-fs-invert="before">
+                      before
+                    </button>
+                    <button class="fs-toggle" data-fs-invert="after">
+                      after
+                    </button>
+                  </div>
+                  <span class="fs-desc" id="fs-invert-desc"></span>
+                </div>
               </div>
               <div class="fs-sub" id="fs-sub-simple" style="display: none">
                 <div class="fs-row">
@@ -4113,6 +4128,20 @@
                     value="60"
                     style="width: 130px; flex: 0 1 auto"
                   />
+                </div>
+                <div class="fs-row">
+                  <label style="font-size: 11px; white-space: nowrap"
+                    >Invert
+                  </label>
+                  <div class="fs-toggles" id="fs2-invert-toggles">
+                    <button class="fs-toggle" data-fs2-invert="before">
+                      before
+                    </button>
+                    <button class="fs-toggle" data-fs2-invert="after">
+                      after
+                    </button>
+                  </div>
+                  <span class="fs-desc" id="fs2-invert-desc"></span>
                 </div>
               </div>
               <div class="fs-sub" id="fs2-sub-simple" style="display: none">
@@ -5021,6 +5050,7 @@
           fsSimpleFreq: "intensity",
           fsFixedFreq: 0.5,
           fsProfile: 0.6,
+          fsInvertMode: "before",
           fs2Mode: "default",
           fs2MotionCh: "stereo",
           fs2SimpleCh: "mono",
@@ -5042,6 +5072,7 @@
           fs2Profile: 0.6,
           fs2SimpleCh: "mono",
           fs2PcProfile: 0.6,
+          fs2InvertMode: "before",
           heatmap: false,
         }
 
@@ -9182,6 +9213,7 @@
           const inv =
             clientIdx === 1 ? [invertA, invertB] : [invertA2, invertB2]
           const del = clientIdx === 1 ? [delayA, delayB] : [delayA2, delayB2]
+          const invMode = v2A ? saveState.fs2InvertMode : saveState.fsInvertMode
           const v2A = fsTextIsV2(textA)
           const mode = v2A ? saveState.fs2Mode : saveState.fsMode
           const motionCh = v2A ? saveState.fs2MotionCh : saveState.fsMotionCh
@@ -9249,7 +9281,10 @@
               const ids = Object.keys(axes)
               const G = {}
               for (const id of ids) {
-                const K = fsMakeKnots(axes[id], inv[c])
+                const K = fsMakeKnots(
+                  axes[id],
+                  invMode === "before" ? inv[c] : false,
+                )
                 if (K) G[id] = fsAxisGrids(K, N, shape2)
               }
               const spec = perCh ? (c === 0 ? specA : specB) : null
@@ -9329,6 +9364,18 @@
                 }
               }
             }
+            if (invMode === "after") {
+              if (inv[0])
+                for (let i = 0; i < N; i++) {
+                  ampA[i] = 1 - ampA[i]
+                  frqA[i] = 1 - frqA[i]
+                }
+              if (inv[1])
+                for (let i = 0; i < N; i++) {
+                  ampB[i] = 1 - ampB[i]
+                  frqB[i] = 1 - frqB[i]
+                }
+            }
             return fsFinishHWL(ampA, ampB, frqA, frqB, del)
           }
           const src = [textA, fsIsDual() && textB ? textB : textA]
@@ -9340,7 +9387,10 @@
           if (dur <= 0) return null
           const N = Math.ceil(dur * FS_RATE)
           const G = src.map((t, c) => {
-            const K = fsMakeKnots(fsParseActions(t), inv[c])
+            const K = fsMakeKnots(
+              fsParseActions(t),
+              invMode === "before" ? inv[c] : false,
+            )
             return K ? fsChannelGrids(K, N, shape) : null
           })
           if (!G[0] || !G[1]) return null
@@ -9382,6 +9432,18 @@
             ampB[i] = Math.min(1, Math.max(0, aB))
             frqA[i] = Math.min(1, Math.max(0, fA))
             frqB[i] = Math.min(1, Math.max(0, fB))
+          }
+          if (invMode === "after") {
+            if (inv[0])
+              for (let i = 0; i < N; i++) {
+                ampA[i] = 1 - ampA[i]
+                frqA[i] = 1 - frqA[i]
+              }
+            if (inv[1])
+              for (let i = 0; i < N; i++) {
+                ampB[i] = 1 - ampB[i]
+                frqB[i] = 1 - frqB[i]
+              }
           }
           return fsFinishHWL(ampA, ampB, frqA, frqB, del)
         }
@@ -9435,6 +9497,7 @@
             saveState.fsSimpleFreq,
             saveState.fsFixedFreq,
             saveState.fsProfile,
+            saveState.fsInvertMode,
             saveState.fs2Mode,
             saveState.fs2MotionCh,
             saveState.fs2SimpleCh,
@@ -9442,6 +9505,7 @@
             saveState.fs2SimpleFreq,
             saveState.fs2FixedFreq,
             saveState.fs2Profile,
+            saveState.fs2InvertMode,
             saveState.fs2PcProfile,
             saveState.fs2SimpleCh,
             JSON.stringify(saveState.fs2ChannelRoles || {}),
@@ -11392,10 +11456,15 @@
             )}%`
           return FS_FREQ_DESC[saveState.fsSimpleFreq] || ""
         }
+        const FS_INVERT_DESC = {
+          before:
+            "processing. Mirrors the stroke — reverses the direction of the sensation",
+          after: "processing. Flips the entire output channel",
+        }
         const FS2_MODE_DESC = {
           default:
             "processed by Howl. Delay and invert don't work for channel B",
-          motion: "motion-based processing (like in Howl)",
+          motion: "energy-based motion processing (like in Howl)",
           simple: "simple processing (L0 curve)",
           perchannel: "route each axis. all none = default mono",
         }
@@ -11444,6 +11513,11 @@
             )}%`
           return FS2_FREQ_DESC[saveState.fs2SimpleFreq] || ""
         }
+        const FS2_INVERT_DESC = {
+          before:
+            "processing. Mirrors the stroke — reverses the direction of the sensation",
+          after: "processing. Flips the entire output channel",
+        }
         let fsDebounce = null
         function fsSetToggles(groupId, attr, value) {
           fsPanelEl.querySelectorAll(`#${groupId} .fs-toggle`).forEach((b) => {
@@ -11455,9 +11529,15 @@
           fsSetToggles("fs-motion-toggles", "fsMotion", saveState.fsMotionCh)
           fsSetToggles("fs-simple-toggles", "fsSimple", saveState.fsSimpleCh)
           fsSetToggles("fs-freq-toggles", "fsFreq", saveState.fsSimpleFreq)
+          fsSetToggles("fs-invert-toggles", "fsInvert", saveState.fsInvertMode)
           fsSetToggles("fs2-mode-toggles", "fs2Mode", saveState.fs2Mode)
           fsSetToggles("fs2-motion-toggles", "fs2Motion", saveState.fs2MotionCh)
           fsSetToggles("fs2-freq-toggles", "fs2Freq", saveState.fs2SimpleFreq)
+          fsSetToggles(
+            "fs2-invert-toggles",
+            "fs2Invert",
+            saveState.fs2InvertMode,
+          )
           fsSetToggles("fs2-simple-toggles", "fs2Simple", saveState.fs2SimpleCh)
           fsSetToggles("fs2-simple-toggles", "fs2Simple", saveState.fs2SimpleCh)
           document.getElementById("fs-mode-desc").textContent =
@@ -11467,6 +11547,8 @@
           document.getElementById("fs-simple-desc").textContent =
             FS_SIMPLE_DESC[saveState.fsSimpleCh] || ""
           document.getElementById("fs-freq-desc").textContent = fsFreqDescText()
+          document.getElementById("fs-invert-desc").textContent =
+            FS_INVERT_DESC[saveState.fsInvertMode] || ""
           document.getElementById("fs2-mode-desc").textContent =
             FS2_MODE_DESC[saveState.fs2Mode] || ""
           document.getElementById("fs2-motion-desc").textContent =
@@ -11475,6 +11557,8 @@
             FS2_SIMPLE_DESC[saveState.fs2SimpleCh] || ""
           document.getElementById("fs2-freq-desc").textContent =
             fs2FreqDescText()
+          document.getElementById("fs2-invert-desc").textContent =
+            FS2_INVERT_DESC[saveState.fs2InvertMode] || ""
           document.getElementById("fs-box-1").style.display =
             saveState.fsMode === "default" ? "none" : ""
           document.getElementById("fs-sub-motion").style.display =
@@ -11540,6 +11624,10 @@
             saveState.fs2SimpleCh = b.dataset.fs2Simple
           else if (b.dataset.fs2Freq)
             saveState.fs2SimpleFreq = b.dataset.fs2Freq
+          else if (b.dataset.fsInvert)
+            saveState.fsInvertMode = b.dataset.fsInvert
+          else if (b.dataset.fs2Invert)
+            saveState.fs2InvertMode = b.dataset.fs2Invert
           else return
           fsSyncUI()
           fsCommit(true)
